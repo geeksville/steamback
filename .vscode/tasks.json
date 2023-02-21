@@ -72,6 +72,15 @@
             "problemMatcher": []
         },
         {
+            "label": "restartloader",
+            "detail": "Restart the plugin loader (to load updated python code)",
+            "type": "shell",
+            "group": "none",
+            "dependsOn": [],
+            "command": "ssh deck@${config:deckip} -p ${config:deckport} ${config:deckkey} 'echo '${config:deckpass}' | sudo -S sudo systemctl restart plugin_loader'",
+            "problemMatcher": []
+        },        
+        {
             "label": "chmodfolders",
             "detail": "chmods folders to prevent perms issues",
             "type": "shell",
@@ -97,7 +106,8 @@
             "group": "test",
             "dependsOn": [
                 "buildall",
-                "deployall"
+                "deployall",
+                "restartloader"
             ],
             "problemMatcher": []
         }

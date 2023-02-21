@@ -1,4 +1,166 @@
+# General plan
+
+figure out how to access SteamClient.Apps from either python or JS
+
+react-devtools --no-sandbox
+
+FIXME - update pull request on template
+
+example action code https://github.com/EmuDeck/SteamlessTimes/blob/5dc1d7379222114fd0a380e871ae6cc8715e41ee/src/ts/index.tsx#L32
+
+use https://pypi.org/project/aioshutil/ from async python
+
+## JS todo
+
+* convert SteamID https://developer.valvesoftware.com/wiki/SteamID to the short account number
+
+user https://www.npmjs.com/package/steamid
+const SteamID = require('steamid');
+let sid = new SteamID('76561198010113463'); // me
+sid.accountid
+
+App.m_CurrentUser.strSteamID
+"76561198010113463"
+
+Use FileReader to read and parse remotecache.vdf files
+
+* add a manual 'snapshot' button to each game.
+* add checkbox for 'automatically snapshot' to each game.
+* add hooks to be notified of game launch/exit
+
+s.RegisterForGameActionStart()
+s.RegisterForGameActionEnd()
+
+* add an icon for the plugin
+* 
+f = await window.SteamClient.InstallFolder.GetInstallFolders()
+f[0].vecApps
+(21) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+0: {nAppID: 228980, strAppName: "Steamworks Common Redistributables", strSortAs: "Steamworks Common Redistributables", rtLastPlayed: 0, strUsedSize: "431262009", …}
+1: {nAppID: 242760, strAppName: "The Forest", strSortAs: "Forest", rtLastPlayed: 1674017593, strUsedSize: "6227339163", …}
+2: {nAppID: 268500, strAppName: "XCOM 2", strSortAs: "XCOM 2", rtLastPlayed: 1671555040, strUsedSize: "81202389052", …}
+3: {nAppID: 361420, strAppName: "ASTRONEER", strSortAs: "ASTRONEER", rtLastPlayed: 1674682555, strUsedSize: "3517627893", …}
+4: {nAppID: 377160, strAppName: "Fallout 4", strSortAs: "Fallout 4", rtLastPlayed: 1673104710, strUsedSize: "38354385679", …}
+5: {nAppID: 459220, strAppName: "Halo Wars: Definitive Edition", strSortAs: "Halo Wars: Definitive Edition", rtLastPlayed: 1674343201, strUsedSize: "10495915939", …}
+6: {nAppID: 648800, strAppName: "Raft", strSortAs: "Raft", rtLastPlayed: 1676830684, strUsedSize: "7544270164", …}
+7: {nAppID: 848450, strAppName: "Subnautica: Below Zero", strSortAs: "Subnautica: Below Zero", rtLastPlayed: 1675371898, strUsedSize: "8890696147", …}
+8: {nAppID: 892970, strAppName: "Valheim", strSortAs: "Valheim", rtLastPlayed: 1676826183, strUsedSize: "1620346213", …}
+9: {nAppID: 962130, strAppName: "Grounded", strSortAs: "Grounded", rtLastPlayed: 1674689871, strUsedSize: "11218364509", …}
+10: {nAppID: 1046030, strAppName: "ISLANDERS", strSortAs: "ISLANDERS", rtLastPlayed: 1674601452, strUsedSize: "639696154", …}
+11: {nAppID: 1062090, strAppName: "Timberborn", strSortAs: "Timberborn", rtLastPlayed: 1674613249, strUsedSize: "2738071563", …}
+12: {nAppID: 1070560, strAppName: "Steam Linux Runtime", strSortAs: "Steam Linux Runtime", rtLastPlayed: 1656989998, strUsedSize: "12612", …}
+13: {nAppID: 1161040, strAppName: "Proton BattlEye Runtime", strSortAs: "Proton BattlEye Runtime", rtLastPlayed: 1663125166, strUsedSize: "5750336", …}
+14: {nAppID: 1324130, strAppName: "Stranded: Alien Dawn", strSortAs: "Stranded: Alien Dawn", rtLastPlayed: 1674766708, strUsedSize: "9430415033", …}
+15: {nAppID: 1391110, strAppName: "Steam Linux Runtime - Soldier", strSortAs: "Steam Linux Runtime - Soldier", rtLastPlayed: 1656990418, strUsedSize: "641113678", …}
+16: {nAppID: 1493710, strAppName: "Proton Experimental", strSortAs: "Proton Experimental", rtLastPlayed: 1663819928, strUsedSize: "1086542197", …}
+17: {nAppID: 1850570, strAppName: "DEATH STRANDING DIRECTOR'S CUT", strSortAs: "DEATH STRANDING DIRECTOR'S CUT", rtLastPlayed: 1672891913, strUsedSize: "80489531057", …}
+18: {nAppID: 1887720, strAppName: "Proton 7.0", strSortAs: "Proton 7.0", rtLastPlayed: 1656992323, strUsedSize: "1098535663", …}
+19: {nAppID: 2101520, strAppName: "Exogate Initiative Demo", strSortAs: "Exogate Initiative Demo", rtLastPlayed: 1676313859, strUsedSize: "2347367620", …}
+20: {nAppID: 2230260, strAppName: "Proton Next", strSortAs: "Proton Next", rtLastPlayed: 1669912399, strUsedSize: "1098535663", …}
+length: 21
+__proto__: Array(0)
+
+
+appStore.GetAppOverviewByAppID(268500)
+b {appid: 268500, shortcut_override_appid: undefined, display_name: "XCOM 2", app_type: 1, mru_index: undefined, …}
+app_type: 1
+appid: 268500
+association: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+canonicalAppType: 1
+controller_support: undefined
+display_name: "XCOM 2"
+header_filename: undefined
+icon_data: undefined
+icon_data_format: undefined
+icon_hash: "f275aeb0b1b947262810569356a199848c643754"
+library_capsule_filename: undefined
+library_id: undefined
+local_per_client_data: {clientid: "0", client_name: "This machine", display_status: 11, status_percentage: 100, installed: true, …}
+m_gameid: undefined
+m_setStoreCategories: Set(7) {2, 22, 29, 30, 23, …}
+m_setStoreTags: Set(20) {9, 1677, 1741, 1708, 14139, …}
+mastersub_appid: undefined
+mastersub_includedwith_logo: undefined
+metacritic_score: 88
+minutes_playtime_forever: 331
+minutes_playtime_last_two_weeks: 1
+most_available_clientid: "0"
+most_available_per_client_data: {clientid: "0", client_name: "This machine", display_status: 11, status_percentage: 100, installed: true, …}
+mru_index: undefined
+optional_parent_app_id: undefined
+owner_account_id: undefined
+per_client_data: [{…}]
+review_percentage_with_bombs: 84
+review_percentage_without_bombs: 84
+review_score_with_bombs: 8
+review_score_without_bombs: 8
+rt_custom_image_mtime: undefined
+rt_last_time_locally_played: undefined
+rt_last_time_played: 1671555040
+rt_last_time_played_or_installed: 1671555040
+rt_original_release_date: 0
+rt_purchased_time: 1670713429
+rt_recent_activity_time: 1671555040
+rt_steam_release_date: 1454648400
+rt_store_asset_mtime: 1587583797
+selected_clientid: "0"
+selected_per_client_data: {clientid: "0", client_name: "This machine", display_status: 11, status_percentage: 100, installed: true, …}
+shortcut_override_appid: undefined
+site_license_site_name: undefined
+size_on_disk: "80441395840"
+sort_as: "xcom 2"
+steam_deck_compat_category: 2
+third_party_mod: undefined
+visible_in_game_list: true
+vr_only: undefined
+vr_supported: undefined
+BHasStoreTag: (...)
+active_beta: (...)
+display_status: (...)
+gameid: (...)
+installed: (...)
+is_available_on_current_platform: (...)
+is_invalid_os_type: (...)
+review_percentage: (...)
+review_score: (...)
+status_percentage: (...)
+store_category: (...)
+store_tag: (...)
+
+##  python todo
+
+* implement find_games - which iterates through games that also have a remotecache.vdf file.
+* implement backup_game - given a game id, create a savestate from the most recent vdf snapshot.
+
+assume:
+vdf = the vdf file json
+gamedir = /home/...userdata.../accountid/gameid
+
+if vdf.ChangeNumber is unchanged from the last backup, no change occurred.
+iterate over props (except ChangeNumber and ostype).  For each prop that is an object, pull out the filename from gamedir + the prop name - copy that file.
+
+
+* update restore game code to use these new style snapshots.
+* add an 'undo' option to revert the most recent restore
+
+bigpicture cde
+http://192.168.86.112:8081/devtools/inspector.html?ws=192.168.86.112:8081/devtools/page/FE611252B92C8D4189D931A9A592F88E
+quick access menu
+http://192.168.86.112:8081/devtools/inspector.html?ws=192.168.86.112:8081/devtools/page/2BDDD3BFD3906FDC24FC8EF294D1DC58
+
+"steam shares" has the goog stuff in window.SteamClient
+
+http://192.168.86.112:8081/devtools/inspector.html?ws=192.168.86.112:8081/devtools/page/B06157D2759AFF83A30044CE44A52AC1
+
+valve python docs https://github.com/ValvePython/steam
+
+# Unformatted follows
+
 Possibly call it "gameshot".
+
+docs: https://wiki.deckbrew.xyz/en/plugin-dev/getting-started
+
+Related existing project: https://github.com/metehankutlu/decky-save-manager/issues/1
 
 Look into https://github.com/mtkennerly/ludusavi.
 
@@ -26,6 +188,38 @@ characters  worlds
 ls /home/kevinh/.steam/debian-installation/steamapps/common/Subnautica/SNAppData/SavedGames/
 options  slot0000  steam_autocloud.vdf
 
+
+on steamdeck:
+./.local/share/Steam/userdata/49847735/1954200/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1062090/remotecache.vdf
+./.local/share/Steam/userdata/49847735/933820/remotecache.vdf
+./.local/share/Steam/userdata/49847735/206440/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1324130/remotecache.vdf
+./.local/share/Steam/userdata/49847735/7/remotecache.vdf
+./.local/share/Steam/userdata/49847735/459220/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1318690/remotecache.vdf
+./.local/share/Steam/userdata/49847735/848350/remotecache.vdf
+./.local/share/Steam/userdata/49847735/848450/remotecache.vdf
+./.local/share/Steam/userdata/49847735/815370/remotecache.vdf
+./.local/share/Steam/userdata/49847735/241100/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1085510/remotecache.vdf
+./.local/share/Steam/userdata/49847735/264710/remotecache.vdf
+./.local/share/Steam/userdata/49847735/323190/remotecache.vdf
+./.local/share/Steam/userdata/49847735/268500/remotecache.vdf
+./.local/share/Steam/userdata/49847735/648800/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1046030/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1332010/remotecache.vdf
+./.local/share/Steam/userdata/49847735/892970/remotecache.vdf
+./.local/share/Steam/userdata/49847735/377160/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1127400/remotecache.vdf
+./.local/share/Steam/userdata/49847735/242760/remotecache.vdf
+./.local/share/Steam/userdata/49847735/962130/remotecache.vdf
+./.local/share/Steam/userdata/49847735/548430/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1284190/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1794680/remotecache.vdf
+./.local/share/Steam/userdata/49847735/1850570/remotecache.vdf
+./.local/share/Steam/userdata/49847735/620/remotecache.vdf
+./.local/share/Steam/userdata/49847735/361420/remotecache.vdf
 
 all vdf files inside of userdata
 /home/kevinh/.steam/debian-installation/userdata/49847735/250820/remotecache.vdf
@@ -214,5 +408,18 @@ I've written a fair amount of JS and python stuff but I do have some questions o
 Rough write-up on what I'm considering: https://www.reddit.com/r/SteamDeck/comments/112awgm/id_like_to_make_a_steam_deck_app_to_let_you/
 
 
+decky replies:
+
+
+AAGaming says:
+ Does decky already provide the appid to name mappings for games somewhere? 
+appStore global
+Does decky have any hooks/callbacks/whatever
+various Register* functions in SteamClient. they return an object {unregister: f ()} which you MUST store and later call in your plugin's onDismount to prevent major issues when your plugin is updated
+
+ok coolbeans - I'll look in the SteamClient code to see if someone already has the remotecache stuff.  If not there I'll try to add something that fits nicely. 
+SteamClient is an interface created from native steam client code
+we only have the interface itself, cant view its source code
+look at our existing typings for it at https://github.com/SteamDeckHomebrew/decky-frontend-lib/blob/main/src/deck-components/SteamClient.ts and browse it by evaluating it in the Console tab of the CEF DevTools 
 
 

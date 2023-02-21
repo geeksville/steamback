@@ -10,6 +10,8 @@ import {
   ServerAPI,
   showContextMenu,
   staticClasses,
+  SteamClient,
+  LifetimeNotification
 } from "decky-frontend-lib";
 import { VFC } from "react";
 import { FaShip } from "react-icons/fa";
@@ -68,7 +70,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
           layout="below"
           onClick={() => {
             Router.CloseSideMenus();
-            Router.Navigate("/decky-plugin-test");
+            Router.Navigate("/deckshot");
           }}
         >
           Router
@@ -78,7 +80,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
   );
 };
 
-const DeckyPluginRouterTest: VFC = () => {
+const DeckshotPluginRouter: VFC = () => {
   return (
     <div style={{ marginTop: "50px", color: "white" }}>
       Hello World!
@@ -90,16 +92,45 @@ const DeckyPluginRouterTest: VFC = () => {
 };
 
 export default definePlugin((serverApi: ServerAPI) => {
-  serverApi.routerHook.addRoute("/decky-plugin-test", DeckyPluginRouterTest, {
+  serverApi.routerHook.addRoute("/deckshot", DeckshotPluginRouter, {
     exact: true,
   });
 
+  /*
+  const startHook = SteamClient.Apps.RegisterForGameActionStart((actionType: number, id: string, action: string) => {
+    console.log("Deckshot GameActionStart", actionType, id, action);
+    
+    Deckshot GameActionStart 1 648800 LaunchApp - when lanched raft
+
+    serverAPI.callPluginMethod<GameActionStartParams, {}>("on_game_start_callback", {
+      idk: actionType,
+      game_id: id,
+      action: action
+    }).then(() => updatePlaytimesThrottled(serverAPI)); 
+});
+  */
+
+  
+  // RegisterForGameActionTaskChange doesn't seem useful - similar to GameActionStart
+  // RegisterForGameActionUserRequest doesn't seem useful - similar to GameActionStart
+  // RegisterForAppOverviewChanges returns nasty binary arrays
+  // RegisterForAppDetails not useful
+  // RegisterForGameActionShowUI not useful
+  // RegisterForGameActionShowError not useful
+  // RegisterForWorkshopChanges not useful
+  // YAY! Deckshot RegisterForAppLifetimeNotifications {unAppID: 648800, nInstanceID: 28768, bRunning: true} is a
+  // LifetimeNotification
+  const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications((n: LifetimeNotification) => {
+    console.log("Deckshot AppLifetimeNotification", n);
+  });
+
   return {
-    title: <div className={staticClasses.Title}>Example Plugin</div>,
+    title: <div className={staticClasses.Title}>Deckshot</div>,
     content: <Content serverAPI={serverApi} />,
     icon: <FaShip />,
     onDismount() {
-      serverApi.routerHook.removeRoute("/decky-plugin-test");
+      taskHook!.unregister();
+      serverApi.routerHook.removeRoute("/deckshot");
     },
   };
 });

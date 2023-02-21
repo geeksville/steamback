@@ -1,10 +1,10 @@
 {
-  "name": "Example Plugin",
-  "author": "John Doe",
+  "name": "Deckshot",
+  "author": "https://github.com/geeksville",
   "flags": ["debug", "_root"],
   "publish": {
     "tags": ["template", "root"],
-    "description": "Decky example plugin.",
+    "description": "Automatic save game snapshot/restore for Steam",
     "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
   }
 }
