@@ -40,7 +40,7 @@ class Plugin:
         p = os.path.join(r, "saves")
         if not os.path.exists(p):
             os.makedirs(p)
-        logger.debug(f'Using saves directory { p }')
+        # logger.debug(f'Using saves directory { p }')
         return p
 
     """
@@ -159,7 +159,7 @@ class Plugin:
             "timestamp": int(l[2]),
             "filename": filename
             }
-        logger.debug(f'Parsed filename {i}')
+        # logger.debug(f'Parsed filename {i}')
         return i
 
     """
@@ -168,10 +168,18 @@ class Plugin:
     async def _cull_old_saves(self):
         infos = await self.get_saveinfos()
 
-        logger.debug("FIXME cull")
-        # If more than one undo, delete the oldest
-        # if more than 10 saves, delete the oldest
-        # shutil.rmtree(path)
+        undos = list(filter(lambda i: i["is_undo"], infos))
+        saves = list(filter(lambda i: not i["is_undo"], infos))
+
+        def delete_oldest(files, to_keep):
+            while len(files) > to_keep:
+                todel = files.pop()
+                logger.info(f'Culling { todel }')
+                if not self.dry_run:
+                    shutil.rmtree(os.path.join(self._get_savesdir(), todel["filename"]))
+        
+        delete_oldest(undos, 1)
+        delete_oldest(saves, 10)
 
     """
     Given a save_info return a full pathname to that directory
