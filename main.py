@@ -196,20 +196,26 @@ class Plugin:
     SaveInfo is a dict with filename, game_id, timestamp, is_undo
     """
     async def do_backup(self, game_id: int) -> dict:
-        saveInfo = self._create_savedir(game_id)
         gameDir = self._get_gamedir(game_id)
         vdf = self._read_vdf(game_id)
 
-        self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(saveInfo))
+        if not vdf:
+            return None
+        else:
+            saveInfo = self._create_savedir(game_id)
+            self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(saveInfo))
 
-        await self._cull_old_saves() 
-        return saveInfo
+            await self._cull_old_saves() 
+            return saveInfo
 
     """
     Restore a particular savegame using the saveinfo object
     """
     async def do_restore(self, save_info: dict):
-        gameDir = self._get_gamedir(save_info.game_id)
+        game_id = save_info["game_id"]
+        vdf = self._read_vdf(game_id)
+        assert vdf
+        gameDir = self._get_gamedir(game_id)
         undoInfo = self._create_savedir(game_id, is_undo = True)
 
         # first make the backup
