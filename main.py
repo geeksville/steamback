@@ -231,10 +231,11 @@ class Plugin:
             return None
         
         newest_save = await self._get_newest_save(game_id)
-        game_timestamp = self._get_vdf_timestamp(vdf, gameDir)
-        if newest_save["timestamp"] > game_timestamp:
-            logger.warn(f'Skipping backup for { game_id } - no changed files')
-            return None
+        if newest_save:
+            game_timestamp = self._get_vdf_timestamp(vdf, gameDir)
+            if newest_save["timestamp"] > game_timestamp:
+                logger.warn(f'Skipping backup for { game_id } - no changed files')
+                return None
 
         saveInfo = self._create_savedir(game_id)
         self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(saveInfo))
