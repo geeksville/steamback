@@ -91,7 +91,7 @@ class Plugin:
                     else:
                         prevl = s
 
-                logger.debug(f'vdf files are {r}')
+                # logger.debug(f'vdf files are {r}')
                 return r
         else:
             logger.debug(f'No vdf {path}')
@@ -131,6 +131,24 @@ class Plugin:
                     shutil.copy2(spath, dpath)
             else:
                 logger.warn(f'Not copying missing file { k }')
+
+    """
+    Get full paths to existing files mentioned in vdf.
+    """
+    def _get_vdf_paths(self, vdf: list, src_dir: str) -> list:
+        # We currently only work with saves in this directory
+        paths = map(lambda k: os.path.join(src_dir, 'remote', k), vdf)
+        paths = list(filter(lambda p: os.path.exists(p), paths))
+        return paths
+
+    """
+    Find the timestamp of the most recently updated file in a vdf
+    """
+    def _get_vdf_timestamp(self, vdf: list, src_dir: str) -> int:
+        full = self._get_vdf_paths(vdf, src_dir)
+        m_times = list(map(lambda f: os.path.getmtime(f), full))
+        max_time = int(round(max(m_times) * 1000)) # we use msecs not secs
+        return max_time
 
     """
     Create a save file directory save-GAMEID-timestamp and return SaveInfo object
@@ -188,6 +206,16 @@ class Plugin:
         d = self._get_savesdir()
         return os.path.join(d, save_info["filename"])
 
+    """
+    Get the newest saveinfo for a specified game (or None if not found)
+    """
+    async def _get_newest_save(self, game_id):
+        infos = await self.get_saveinfos()
+
+        # Find first matching item or None
+        newest = next(
+            (x for x in infos if x["game_id"] == game_id and not x["is_undo"]), None)
+        return newest
 
     """
     Backup a particular game.
@@ -201,12 +229,18 @@ class Plugin:
 
         if not vdf:
             return None
-        else:
-            saveInfo = self._create_savedir(game_id)
-            self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(saveInfo))
+        
+        newest_save = await self._get_newest_save(game_id)
+        game_timestamp = self._get_vdf_timestamp(vdf, gameDir)
+        if newest_save["timestamp"] > game_timestamp:
+            logger.warn(f'Skipping backup for { game_id } - no changed files')
+            return None
 
-            await self._cull_old_saves() 
-            return saveInfo
+        saveInfo = self._create_savedir(game_id)
+        self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(saveInfo))
+
+        await self._cull_old_saves() 
+        return saveInfo
 
     """
     Restore a particular savegame using the saveinfo object
@@ -216,10 +250,11 @@ class Plugin:
         vdf = self._read_vdf(game_id)
         assert vdf
         gameDir = self._get_gamedir(game_id)
-        undoInfo = self._create_savedir(game_id, is_undo = True)
-
-        # first make the backup
-        self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(undoInfo))
+        
+        # first make the backup (unless restoring from an undo already)
+        if not save_info["is_undo"]:
+            undoInfo = self._create_savedir(game_id, is_undo=True)
+            self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(undoInfo))
 
         # then restore from our old snapshot
         self._copy_by_vdf(vdf, self._saveinfo_to_dir(save_info), gameDir)
