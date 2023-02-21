@@ -6,13 +6,22 @@ async def main():
     p = Plugin()
     await p.set_account_id(49847735)
     # print(f'Initial saveinfos { await p.get_saveinfos() }')
-    await p.do_backup(892970)
+    p.ignore_unchanged = False # Force backup for testing
+    si = await p.do_backup(892970)
+    print(f'Valheim backup results: { si }')
+    assert si is not None
+
+    p.ignore_unchanged = True  # following backup should be skipped because no changes
+    si = await p.do_backup(892970)
+    assert si is None
     
     # Test a game that should not exist
-    await p.do_backup(555)
+    si = await p.do_backup(555)
+    assert si is None
 
     # Test a game with unsupported vdf (raft)
-    await p.do_backup(648800)
+    si = await p.do_backup(648800)
+    assert si is None
 
     infos = await p.get_saveinfos()
     saves = list(filter(lambda i: not i["is_undo"], infos))

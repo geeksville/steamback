@@ -24,7 +24,7 @@ class Plugin:
         self.account_id = 0
         self.dry_run = False # Set to true to suppress 'real' writes to directories  
         # FIXME not yet implemented
-        # self.ignore_unchanged = True # don't generate backups if the files haven't changed since last backup
+        self.ignore_unchanged = True # don't generate backups if the files haven't changed since last backup
 
     async def set_account_id(self, id_num: int):
         self.account_id = id_num
@@ -231,7 +231,7 @@ class Plugin:
             return None
         
         newest_save = await self._get_newest_save(game_id)
-        if newest_save:
+        if newest_save and self.ignore_unchanged:
             game_timestamp = self._get_vdf_timestamp(vdf, gameDir)
             if newest_save["timestamp"] > game_timestamp:
                 logger.warn(f'Skipping backup for { game_id } - no changed files')
