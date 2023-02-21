@@ -56,6 +56,11 @@ class Plugin:
     def _read_vdf(self, game_id: int) -> list:
         d = self._get_gamedir(game_id)
         path = os.path.join(d, "remotecache.vdf")
+
+        if not os.path.isdir(os.path.join(d, "remote")):
+            logger.warn(f'Unable to backup { game_id }: not yet supported') # We currently only understand games that have their saves in teh 'remote' subdir
+            return None
+
         if os.path.isfile(path):
             logger.debug(f'Read vdf {path}')
             with open(path) as f:
@@ -114,15 +119,18 @@ class Plugin:
     def _copy_by_vdf(self, vdf: list, src_dir: str, dest_dir: str):
         logger.debug(f'Copying from { src_dir } to { dest_dir }')
         for k in vdf:
-            spath = os.path.join(src_dir, k)
+            spath = os.path.join(src_dir, 'remote', k) # We currently only work with saves in this directory
 
             # if the filename contains directories - create them
-            dpath = os.path.join(dest_dir, k)
-            dir = os.path.dirname(k)
-            logger.debug(f'Copying file { k }')
-            if not self.dry_run:
-                os.makedirs(dir, exist_ok=True)
-                shutil.copy2(spath, dpath)
+            if os.path.exists(spath):
+                dpath = os.path.join(dest_dir, k)
+                logger.debug(f'Copying file { k }')
+                if not self.dry_run:
+                    dir = os.path.dirname(dpath)
+                    os.makedirs(dir, exist_ok=True)
+                    shutil.copy2(spath, dpath)
+            else:
+                logger.warn(f'Not copying missing file { k }')
 
     """
     Create a save file directory save-GAMEID-timestamp and return SaveInfo object
@@ -211,7 +219,17 @@ class Plugin:
     """
     async def get_saveinfos(self) -> list[dict]:
         dir = self._get_savesdir()
-        return [ "fish" ]
+        files = os.listdir(dir)
+        infos = list(map(lambda f: self._file_to_saveinfo(f), files))
+
+        # Sort by timestamp, newest first
+        infos.sort(key = lambda i: i["timestamp"], reverse = True)
+
+        # put undos first
+        undos = list(filter(lambda i: i["is_undo"], infos))
+        saves = list(filter(lambda i: not i["is_undo"], infos))
+        infos = undos + saves
+        return infos
 
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self):
