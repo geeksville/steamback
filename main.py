@@ -17,16 +17,22 @@ logger=logging.getLogger()
 
 logger.setLevel(logging.DEBUG)
 
-is_decky = hasattr(os.environ, "DECKY_PLUGIN_RUNTIME_DIR")
+is_decky = True
 
 class Plugin:
     def __init__(self):
+        global is_decky
+        is_decky = hasattr(os.environ, "DECKY_PLUGIN_RUNTIME_DIR") # env vars seem to not be set till later
         self.account_id = 0
         self.dry_run = False # Set to true to suppress 'real' writes to directories  
         # FIXME not yet implemented
         self.ignore_unchanged = True # don't generate backups if the files haven't changed since last backup
 
     async def set_account_id(self, id_num: int):
+        if not isinstance(self, Plugin):
+            logger.warn('self is not an instance, fixing')
+            self = pinstance
+
         self.account_id = id_num
         pass
 
@@ -46,7 +52,7 @@ class Plugin:
     """
     Return the path to the game directory for a specified game
     """
-    def _get_gamedir(self, game_id: int):
+    def _get_gamedir(self, game_id: int) -> str:
         r = "/home/deck/.local/share/Steam/userdata" if is_decky else "/home/kevinh/.steam/debian-installation/userdata"
         return os.path.join(r, str(self.account_id), str(game_id))
 
@@ -224,7 +230,16 @@ class Plugin:
     SaveInfo is a dict with filename, game_id, timestamp, is_undo
     """
     async def do_backup(self, game_id: int) -> dict:
+        logger.info(f'Attempting backup of { game_id }')
+        logger.info(f'self is { self } gameid is { game_id } typ { type(game_id)}')
+
+        if not isinstance(self, Plugin):
+            logger.warn('self is not an instance, fixing')
+            self = pinstance
+
+        game_id = int(game_id) # force int type, javascript comes across as strs
         gameDir = self._get_gamedir(game_id)
+        logger.info(f'got gamedir { gameDir }')
         vdf = self._read_vdf(game_id)
 
         if not vdf:
@@ -247,6 +262,7 @@ class Plugin:
     Restore a particular savegame using the saveinfo object
     """
     async def do_restore(self, save_info: dict):
+        logger.info(f'Attempting restore of { save_info }')
         game_id = save_info["game_id"]
         vdf = self._read_vdf(game_id)
         assert vdf
@@ -290,6 +306,4 @@ class Plugin:
         logger.info("Deckshot exiting!")
 
 
-
-
-
+pinstance = Plugin()

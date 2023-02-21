@@ -30,7 +30,7 @@ async def main():
     # Try to restore from our most recently created valheim snapshot
     i = saves[0]
     p.dry_run = True # Don't accidentally toast my running game
-    # await p.do_restore(i)
+    await p.do_restore(i)
 
     print('Tests complete')
 

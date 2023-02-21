@@ -15,13 +15,11 @@ import {
 } from "decky-frontend-lib";
 import { VFC } from "react";
 import { FaShip } from "react-icons/fa";
+import SteamID from "steamid";
 
 import logo from "../assets/logo.png";
 
-// interface AddMethodArgs {
-//   left: number;
-//   right: number;
-// }
+declare let App: any
 
 const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
   // const [result, setResult] = useState<number | undefined>();
@@ -38,7 +36,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
   //     setResult(result.result);
   //   }
   // };
-
+  
   return (
     <PanelSection title="Panel Section">
       <PanelSectionRow>
@@ -122,7 +120,22 @@ export default definePlugin((serverApi: ServerAPI) => {
   // LifetimeNotification
   const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications((n: LifetimeNotification) => {
     console.log("Deckshot AppLifetimeNotification", n);
+
+    if (!n.bRunning) {
+      serverApi.callPluginMethod("do_backup", {
+        game_id: n.unAppID
+      }).then((r) =>
+        console.log("Python replied", r.result))
+    }
   });
+
+
+  let sid = new SteamID(App.m_CurrentUser.strSteamID); 
+
+  serverApi.callPluginMethod("set_account_id", {
+    id_num: sid.accountid
+  }).then((r) =>
+    console.log("Python replied", r.result))
 
   return {
     title: <div className={staticClasses.Title}>Deckshot</div>,
