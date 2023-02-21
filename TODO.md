@@ -131,6 +131,7 @@ store_tag: (...)
 
 * implement find_games - which iterates through games that also have a remotecache.vdf file.
 * implement backup_game - given a game id, create a savestate from the most recent vdf snapshot.
+* Make sure we handle nested files/directories properly
 
 assume:
 vdf = the vdf file json
