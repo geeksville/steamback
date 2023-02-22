@@ -14,6 +14,8 @@ import {
 import { VFC, useState, useRef, useEffect } from "react";
 import { FiDownload, FiUpload } from "react-icons/fi";
 import SteamID from "steamid";
+import TimeAgo from "javascript-time-ago"
+import en from "javascript-time-ago/locale/en"
 
 // import logo from "../assets/logo.png";
 
@@ -30,6 +32,9 @@ interface SaveInfo {
 const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([]);
   const ref = useRef(true);
+
+  // Create formatter (English).
+  const timeAgo = new TimeAgo('en-US')
 
   // FIXME nasty hack to check if this is our first render.  Only then do we do our plugin read
   // per https://www.developerupdates.com/blog/how-to-check-if-react-functional-component-first-time-render-using-hooks
@@ -69,7 +74,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
             return <PanelSectionRow>
               <ButtonItem
                 layout="below">
-                SI { si.game_id }: { si.timestamp }
+                SI { si.game_id }: { timeAgo.format(new Date(si.timestamp)) }
               </ButtonItem>
             </PanelSectionRow>
           })
@@ -131,6 +136,9 @@ const DeckshotPluginRouter: VFC = () => {
 };
 
 export default definePlugin((serverApi: ServerAPI) => {
+
+  TimeAgo.addDefaultLocale(en)
+
   serverApi.routerHook.addRoute("/deckshot", DeckshotPluginRouter, {
     exact: true,
   });
