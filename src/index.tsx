@@ -197,8 +197,9 @@ export default definePlugin((serverApi: ServerAPI) => {
 
   serverApi.callPluginMethod("set_account_id", {
     id_num: sid.accountid
-  }).then((r) =>
-    console.log("Python replied", r.result))
+  }).catch(e =>
+      console.error("Can't set deckshot account", e)
+    )
 
   return {
     title: <div className={staticClasses.Title}>Deckshot</div>,
