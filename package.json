@@ -18,8 +18,8 @@
     "steam-deck",
     "deck"
   ],
-  "author": "Jonas Dellinger <jonas@dellinger.dev>",
-  "license": "BSD-3-Clause",
+  "author": "Kevin Hester <kevinh@geeksville.com",
+  "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/geeksville/deckshot/issues"
   },
