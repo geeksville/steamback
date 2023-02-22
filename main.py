@@ -297,6 +297,14 @@ class Plugin:
         await self._cull_old_saves() # we now might have too many undos, so possibly delete one
 
     """
+    Given a list of steam game-ids, return a list of game-ids which are supported for backups
+    """
+    async def find_supported(self, game_ids: list):
+        self = fixself(self)
+        supported = list(filter(lambda id: self._read_vdf(id), game_ids))
+        return supported
+
+    """
     Return all available saves, newest save first and undo as the absolute first
 
     Returns an array of SaveInfo objects

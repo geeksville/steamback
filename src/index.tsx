@@ -45,10 +45,29 @@ interface SaveInfo {
 
 const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([]);
+  const [supportedGameIds, setSupportedGameIds] = useState<number[]>([]);
   const ref = useRef(true);
 
   // Create formatter (English).
   const timeAgo = new TimeAgo('en-US')
+
+  // Find which games we can work on
+  async function getSupported() {
+    const folders = await SteamClient.InstallFolder.GetInstallFolders()
+    let appIds: number[] = []
+    for (let f of folders) {
+      for (let a of f.vecApps) {
+        appIds = appIds.concat(a.nAppID)
+      }
+    }
+    console.log("installed apps", appIds)
+    const r = await serverAPI.callPluginMethod("find_supported", {
+      game_ids: appIds
+    })
+
+    console.log("deckshot supported", r.result)
+    setSupportedGameIds(r.result as number[])
+  }
 
   // FIXME nasty hack to check if this is our first render.  Only then do we do our plugin read
   // per https://www.developerupdates.com/blog/how-to-check-if-react-functional-component-first-time-render-using-hooks
@@ -59,11 +78,13 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       ref.current = false;
       console.log('First Render');
 
+      getSupported() 
+
       serverAPI.callPluginMethod("get_saveinfos", {}).then(saveinfo => {
         console.log("deckshot saveinfos", saveinfo.result)
         setSaveInfos(saveinfo.result as SaveInfo[])
       }).catch(e => {
-        console.log("deckshot saveinfos failed", e)
+        console.error("deckshot saveinfos failed", e)
       })
     } else {
       console.log('Not a first Render');
@@ -72,7 +93,18 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   
   return (
     <div>
-      <PanelSection title="Settings">
+      Deckshot automatically takes save-game snapshots for many Steam games. See below for a list of the supported installed games.
+      <PanelSection title="Supported games">
+        <ul>
+          {
+            supportedGameIds.map(id => {
+              console.log('showing supported ', id)
+              const appDetails = appStore.GetAppOverviewByGameID(id)
+
+              return <li>{ appDetails.display_name}</li>
+            })
+          }
+        </ul>
       </PanelSection>
       <PanelSection title="Snapshots">
         {
@@ -98,19 +130,25 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
 
             // raise a modal dialog to confirm the user wants to restore
             const askRestore = () => {
+              const title = si.is_undo ? "Revert recent snapshot" : "Revert to snapshot"
+              const message = si.is_undo ?
+                `Are you sure you want to undo your changes to ${appDetails.display_name}?` :
+                `Are you sure you want to revert ${appDetails.display_name} to the save from ${agoStr}?`
+
               showModal(
                 <ConfirmModal
                   onOK= { doRestore }
-                  strTitle="Revert to snapshot"
-                  strDescription={`Are you sure you want to revert ${appDetails.display_name} to the save from ${ agoStr }?`}
+                  strTitle={ title }
+                  strDescription={ message }
                 />, window
               )
             }
 
+            const buttonText = si.is_undo ? `Undo ${appDetails.display_name} changes` : `${appDetails.display_name} ${ agoStr }`
             return <PanelSectionRow>
               <ButtonItem onClick={ askRestore }
                 layout="below">
-                { appDetails.display_name } { agoStr }
+                {buttonText}
               </ButtonItem>
             </PanelSectionRow>
           })
@@ -119,46 +157,6 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     </div>          
   );
 };
-
-/*
-old code
-
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={(e) =>
-            showContextMenu(
-              <Menu label="Menu" cancelText="CAAAANCEL" onCancel={() => {}}>
-                <MenuItem onSelected={() => {}}>Item #1</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #2</MenuItem>
-                <MenuItem onSelected={() => {}}>Item #3</MenuItem>
-              </Menu>,
-              e.currentTarget ?? window
-            )
-          }
-        >
-          Server says yolo
-        </ButtonItem>
-      </PanelSectionRow>
-
-      <PanelSectionRow>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src={logo} />
-        </div>
-      </PanelSectionRow>
-
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => {
-            Router.CloseSideMenus();
-            Router.Navigate("/deckshot");
-          }}
-        >
-          Router
-        </ButtonItem>
-      </PanelSectionRow>
-*/
 
 const DeckshotPluginRouter: VFC = () => {
   return (
