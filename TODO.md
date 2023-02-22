@@ -5,6 +5,7 @@ figure out how to access SteamClient.Apps from either python or JS
 react-devtools --no-sandbox
 
 FIXME - update pull request on template
+FIXME - delete unneeded forks
 
 example action code https://github.com/EmuDeck/SteamlessTimes/blob/5dc1d7379222114fd0a380e871ae6cc8715e41ee/src/ts/index.tsx#L32
 

@@ -53,27 +53,30 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   })
 
   return (
-    <PanelSection title="Snapshots">
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below">
-          Server says yolo
-        </ButtonItem>
-      </PanelSectionRow>
+    <div div>
+      <PanelSection title="Settings">
+      </PanelSection>
+      <PanelSection title="Snapshots">
+        <PanelSectionRow>
+          <ButtonItem
+            layout="below">
+            Server says yolo
+          </ButtonItem>
+        </PanelSectionRow>
 
-      {
-        saveInfos.map(si => {
-          console.log('showing saveinfo ', si);
-          return <PanelSectionRow>
-            <ButtonItem
-              layout="below">
-              Server says yolox
-            </ButtonItem>
-          </PanelSectionRow>
-        })
-      }
-
-    </PanelSection>
+        {
+          saveInfos.map(si => {
+            console.log('showing saveinfo ', si);
+            return <PanelSectionRow>
+              <ButtonItem
+                layout="below">
+                Server says yolox
+              </ButtonItem>
+            </PanelSectionRow>
+          })
+        }
+      </PanelSection>
+    </div>          
   );
 };
 
