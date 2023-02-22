@@ -1,39 +1,10 @@
 # General plan
 
-figure out how to access SteamClient.Apps from either python or JS
 
 react-devtools --no-sandbox
 
-FIXME - don't allow restores while games are running
-FIXME - properly list undo files
-FIXME - list eligible games
-FIXME - update pull request on template
-FIXME - delete unneeded forks
-
-example action code https://github.com/EmuDeck/SteamlessTimes/blob/5dc1d7379222114fd0a380e871ae6cc8715e41ee/src/ts/index.tsx#L32
-
-use https://pypi.org/project/aioshutil/ from async python
-
 ## JS todo
 
-* convert SteamID https://developer.valvesoftware.com/wiki/SteamID to the short account number
-
-user https://www.npmjs.com/package/steamid
-const SteamID = require('steamid');
-let sid = new SteamID('76561198010113463'); // me
-sid.accountid
-
-App.m_CurrentUser.strSteamID
-"76561198010113463"
-
-Use FileReader to read and parse remotecache.vdf files
-
-* add a manual 'snapshot' button to each game.
-* add checkbox for 'automatically snapshot' to each game.
-* add hooks to be notified of game launch/exit
-
-s.RegisterForGameActionStart()
-s.RegisterForGameActionEnd()
 
 * add an icon for the plugin
 * 
