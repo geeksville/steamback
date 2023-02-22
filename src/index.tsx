@@ -61,11 +61,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     setSupportedGameIds(r.result as number[])
   }
 
-  // FIXME nasty hack to check if this is our first render.  Only then do we do our plugin read
-  // per https://www.developerupdates.com/blog/how-to-check-if-react-functional-component-first-time-render-using-hooks
   useEffect(() => {
-    // console.log('First Render');
-
     getSupported()
 
     serverAPI.callPluginMethod("get_saveinfos", {}).then(saveinfo => {
@@ -74,7 +70,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     }).catch(e => {
       console.error("deckshot saveinfos failed", e)
     })
-  }, [])
+  }, []) // extra [] at end means only run for first render
 
   /// Only show snapshot section if we have some saveinfos
   const snapshotHtml = saveInfos.length < 1 ?
