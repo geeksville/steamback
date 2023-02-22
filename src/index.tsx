@@ -14,7 +14,8 @@ import {
   LifetimeNotification
 } from "decky-frontend-lib";
 import { VFC } from "react";
-import { FaShip } from "react-icons/fa";
+import { FaShip, FaReact } from "react-icons/fa";
+import { FiDownload, FiUpload } from "react-icons/fi";
 import SteamID from "steamid";
 
 import logo from "../assets/logo.png";
@@ -124,11 +125,18 @@ export default definePlugin((serverApi: ServerAPI) => {
     if (!n.bRunning) {
       serverApi.callPluginMethod("do_backup", {
         game_id: n.unAppID
-      }).then((r) =>
-        console.log("Python replied", r.result))
+      }).then((r) => {
+        const saveinfo = r.result
+        console.log("deckshot backup results ", saveinfo)
+        if (saveinfo)
+          serverApi.toaster.toast({
+            title: 'Deckshot',
+            body: 'Save game snapshot taken',
+            icon: <FiDownload />,
+          });
+      })
     }
-  });
-
+  })
 
   let sid = new SteamID(App.m_CurrentUser.strSteamID); 
 
