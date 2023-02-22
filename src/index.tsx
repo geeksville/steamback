@@ -40,20 +40,19 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       ref.current = false;
       console.log('First Render');
 
-      const fetchSaves = (async function () {
-        const saveinfo = (await serverAPI.callPluginMethod("get_saveinfos", {}))
-        console.log("deckshot saveinfos", saveinfo)
-        if (saveinfo.success)
-          setSaveInfos(saveinfo.result as SaveInfo[])
+      serverAPI.callPluginMethod("get_saveinfos", {}).then(saveinfo => {
+        console.log("deckshot saveinfos", saveinfo.result)
+        setSaveInfos(saveinfo.result as SaveInfo[])
+      }).catch(e => {
+        console.log("deckshot saveinfos failed", e)
       })
-      fetchSaves()
     } else {
       console.log('Not a first Render');
     }
   })
 
   return (
-    <div div>
+    <div>
       <PanelSection title="Settings">
       </PanelSection>
       <PanelSection title="Snapshots">
@@ -70,7 +69,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
             return <PanelSectionRow>
               <ButtonItem
                 layout="below">
-                Server says yolox
+                SI { si.game_id }: { si.timestamp }
               </ButtonItem>
             </PanelSectionRow>
           })
