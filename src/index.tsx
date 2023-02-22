@@ -39,7 +39,6 @@ interface SaveInfo {
 const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([]);
   const [supportedGameIds, setSupportedGameIds] = useState<number[]>([]);
-  const ref = useRef(true);
 
   // Create formatter (English).
   const timeAgo = new TimeAgo('en-US')
@@ -65,24 +64,17 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   // FIXME nasty hack to check if this is our first render.  Only then do we do our plugin read
   // per https://www.developerupdates.com/blog/how-to-check-if-react-functional-component-first-time-render-using-hooks
   useEffect(() => {
-    const firstRender = ref.current;
+    // console.log('First Render');
 
-    if (firstRender) {
-      ref.current = false;
-      // console.log('First Render');
+    getSupported()
 
-      getSupported()
-
-      serverAPI.callPluginMethod("get_saveinfos", {}).then(saveinfo => {
-        // console.log("deckshot saveinfos", saveinfo.result)
-        setSaveInfos(saveinfo.result as SaveInfo[])
-      }).catch(e => {
-        console.error("deckshot saveinfos failed", e)
-      })
-    } else {
-      // console.log('Not a first Render');
-    }
-  })
+    serverAPI.callPluginMethod("get_saveinfos", {}).then(saveinfo => {
+      // console.log("deckshot saveinfos", saveinfo.result)
+      setSaveInfos(saveinfo.result as SaveInfo[])
+    }).catch(e => {
+      console.error("deckshot saveinfos failed", e)
+    })
+  }, [])
 
   /// Only show snapshot section if we have some saveinfos
   const snapshotHtml = saveInfos.length < 1 ?
@@ -131,7 +123,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           const buttonText = si.is_undo ? `Undo ${appDetails.display_name} changes` : `${appDetails.display_name} ${agoStr}`
           return <PanelSectionRow>
             <ButtonItem onClick={askRestore}
-              disabled={ runningApps.has(si.game_id) } // Don't let user restore files while game is running
+              disabled={runningApps.has(si.game_id)} // Don't let user restore files while game is running
               layout="below">
               {buttonText}
             </ButtonItem>
