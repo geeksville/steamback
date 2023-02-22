@@ -1,17 +1,17 @@
 import {
   ButtonItem,
   definePlugin,
-  DialogButton,
   // Menu, MenuItem, showContextMenu,
   PanelSection,
   PanelSectionRow,
-  Router,
   ServerAPI,
   staticClasses,
-  SteamClient,
   LifetimeNotification,
   showModal,
-  ConfirmModal
+  ConfirmModal,
+  Navigation,
+  AppOverview,
+  Router
 } from "decky-frontend-lib";
 import { VFC, useState, useRef, useEffect } from "react";
 import { FiDownload, FiUpload } from "react-icons/fi";
@@ -19,18 +19,11 @@ import SteamID from "steamid";
 import TimeAgo from "javascript-time-ago"
 import en from "javascript-time-ago/locale/en"
 
-// import logo from "../assets/logo.png";
 
 // FIXME - find a better source for these defs?, I'm hand specifying here
 // based on looking at ProtonDB plugin
-declare let App: any
-type AppOverview = {
-  app_type: number
-  appid: string
-  display_name: string
-  // display_status: DisplayStatus
-  sort_as: string
-}
+declare let App: any // used for m_currentUser
+
 declare namespace appStore {
   function GetAppOverviewByGameID(appId: number): AppOverview
 }
@@ -60,12 +53,12 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
         appIds = appIds.concat(a.nAppID)
       }
     }
-    console.log("installed apps", appIds)
+    // console.log("installed apps", appIds)
     const r = await serverAPI.callPluginMethod("find_supported", {
       game_ids: appIds
     })
 
-    console.log("deckshot supported", r.result)
+    // console.log("deckshot supported", r.result)
     setSupportedGameIds(r.result as number[])
   }
 
@@ -76,131 +69,116 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
 
     if (firstRender) {
       ref.current = false;
-      console.log('First Render');
+      // console.log('First Render');
 
-      getSupported() 
+      getSupported()
 
       serverAPI.callPluginMethod("get_saveinfos", {}).then(saveinfo => {
-        console.log("deckshot saveinfos", saveinfo.result)
+        // console.log("deckshot saveinfos", saveinfo.result)
         setSaveInfos(saveinfo.result as SaveInfo[])
       }).catch(e => {
         console.error("deckshot saveinfos failed", e)
       })
     } else {
-      console.log('Not a first Render');
+      // console.log('Not a first Render');
     }
   })
-  
+
+  /// Only show snapshot section if we have some saveinfos
+  const snapshotHtml = saveInfos.length < 1 ?
+    <div></div> :
+    <PanelSection title="Snapshots">
+      <span style={{ padding: '1rem', display: 'block' }}>This plugin is currently in <b>alpha</b> testing, if you see problems use the 'Undo' button and let us know.  </span>
+      {
+        saveInfos.map(si => {
+          // console.log('showing saveinfo ', si);
+
+          const appDetails = appStore.GetAppOverviewByGameID(si.game_id)
+          const agoStr = timeAgo.format(new Date(si.timestamp))
+
+          const doRestore = () => {
+            serverAPI.callPluginMethod("do_restore", {
+              save_info: si
+            }).then(() => {
+              serverAPI.toaster.toast({
+                title: 'Deckshot',
+                body: `Reverted ${appDetails.display_name} from snapshot`,
+                icon: <FiUpload />,
+              });
+            }).catch(error =>
+              console.error('Deckshot restore', error)
+            )
+          }
+
+          // raise a modal dialog to confirm the user wants to restore
+          const askRestore = () => {
+            const title = si.is_undo ? "Revert recent snapshot" : "Revert to snapshot"
+            const message = si.is_undo ?
+              `Are you sure you want to undo your changes to ${appDetails.display_name}?` :
+              `Are you sure you want to revert ${appDetails.display_name} to the save from ${agoStr}?`
+
+            showModal(
+              <ConfirmModal
+                onOK={doRestore}
+                strTitle={title}
+                strDescription={message}
+              />, window
+            )
+          }
+
+          const runningApps = new Set(Router.RunningApps.map(a => a.appid))
+          console.log("running apps", runningApps)
+          const buttonText = si.is_undo ? `Undo ${appDetails.display_name} changes` : `${appDetails.display_name} ${agoStr}`
+          return <PanelSectionRow>
+            <ButtonItem onClick={askRestore}
+              disabled={ runningApps.has(si.game_id.toString()) } // Don't let user restore files while game is running
+              layout="below">
+              {buttonText}
+            </ButtonItem>
+          </PanelSectionRow>
+        })
+      }
+    </PanelSection>
+
+  const supportedHtml = supportedGameIds.length < 1 ?
+    <span style={{ padding: '1rem', display: 'block' }}>Unfortunately, none of the currently installed games are supported.  Please check for new deckshot versions occasionally...</span> :
+    <ul style={{ listStyleType: 'none', padding: '1rem' }}>
+      {
+        supportedGameIds.map(id => {
+          // console.log('showing supported ', id)
+          const appDetails = appStore.GetAppOverviewByGameID(id)
+
+          return <li style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', paddingBottom: '10px', width: '100%', justifyContent: 'space-between' }}>
+            <span>{appDetails.display_name}</span>
+          </li>
+        })
+      }
+    </ul>
+
+  const helpUrl = "https://github.com/geeksville/deckshot"
   return (
     <div>
-      Deckshot automatically takes save-game snapshots for many Steam games. See below for a list of the supported installed games.
+      <span style={{ padding: '1rem', display: 'block' }}><a href={helpUrl} onClick={async () => {
+        Navigation.NavigateToExternalWeb(
+          `${helpUrl}`
+        )
+      }}>Deckshot</a> automatically takes save-game snapshots for many Steam games. See our github page for more information.</span>
+
+      {snapshotHtml}
+
       <PanelSection title="Supported games">
-        <ul>
-          {
-            supportedGameIds.map(id => {
-              console.log('showing supported ', id)
-              const appDetails = appStore.GetAppOverviewByGameID(id)
-
-              return <li>{ appDetails.display_name}</li>
-            })
-          }
-        </ul>
+        {supportedHtml}
       </PanelSection>
-      <PanelSection title="Snapshots">
-        {
-          saveInfos.map(si => {
-            console.log('showing saveinfo ', si);
-
-            const appDetails = appStore.GetAppOverviewByGameID(si.game_id)
-            const agoStr = timeAgo.format(new Date(si.timestamp))
-
-            const doRestore = () => {
-              serverAPI.callPluginMethod("do_restore", {
-                save_info: si
-              }).then(() => {
-                  serverAPI.toaster.toast({
-                    title: 'Deckshot',
-                    body: `Reverted ${ appDetails.display_name} from snapshot`,
-                    icon: <FiUpload />,
-                  });
-              }).catch(error =>
-                console.error('Deckshot restore', error)
-              )
-            }
-
-            // raise a modal dialog to confirm the user wants to restore
-            const askRestore = () => {
-              const title = si.is_undo ? "Revert recent snapshot" : "Revert to snapshot"
-              const message = si.is_undo ?
-                `Are you sure you want to undo your changes to ${appDetails.display_name}?` :
-                `Are you sure you want to revert ${appDetails.display_name} to the save from ${agoStr}?`
-
-              showModal(
-                <ConfirmModal
-                  onOK= { doRestore }
-                  strTitle={ title }
-                  strDescription={ message }
-                />, window
-              )
-            }
-
-            const buttonText = si.is_undo ? `Undo ${appDetails.display_name} changes` : `${appDetails.display_name} ${ agoStr }`
-            return <PanelSectionRow>
-              <ButtonItem onClick={ askRestore }
-                layout="below">
-                {buttonText}
-              </ButtonItem>
-            </PanelSectionRow>
-          })
-        }
-      </PanelSection>
-    </div>          
-  );
-};
-
-const DeckshotPluginRouter: VFC = () => {
-  return (
-    <div style={{ marginTop: "50px", color: "white" }}>
-      Hello World!
-      <DialogButton onClick={() => Router.NavigateToLibraryTab()}>
-        Go to Library
-      </DialogButton>
     </div>
   );
 };
+
+
 
 export default definePlugin((serverApi: ServerAPI) => {
 
   TimeAgo.addDefaultLocale(en)
 
-  serverApi.routerHook.addRoute("/deckshot", DeckshotPluginRouter, {
-    exact: true,
-  });
-
-  /*
-  const startHook = SteamClient.Apps.RegisterForGameActionStart((actionType: number, id: string, action: string) => {
-    console.log("Deckshot GameActionStart", actionType, id, action);
-    
-    Deckshot GameActionStart 1 648800 LaunchApp - when lanched raft
-
-    serverAPI.callPluginMethod<GameActionStartParams, {}>("on_game_start_callback", {
-      idk: actionType,
-      game_id: id,
-      action: action
-    }).then(() => updatePlaytimesThrottled(serverAPI)); 
-});
-  */
-
-  
-  // RegisterForGameActionTaskChange doesn't seem useful - similar to GameActionStart
-  // RegisterForGameActionUserRequest doesn't seem useful - similar to GameActionStart
-  // RegisterForAppOverviewChanges returns nasty binary arrays
-  // RegisterForAppDetails not useful
-  // RegisterForGameActionShowUI not useful
-  // RegisterForGameActionShowError not useful
-  // RegisterForWorkshopChanges not useful
-  // YAY! Deckshot RegisterForAppLifetimeNotifications {unAppID: 648800, nInstanceID: 28768, bRunning: true} is a
-  // LifetimeNotification
   const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications((n: LifetimeNotification) => {
     // console.log("Deckshot AppLifetimeNotification", n);
 
@@ -213,16 +191,16 @@ export default definePlugin((serverApi: ServerAPI) => {
         if (saveinfo)
           serverApi.toaster.toast({
             title: 'Deckshot',
-            body: `${ appStore.GetAppOverviewByGameID(saveinfo.game_id).display_name } snapshot taken`,
+            body: `${appStore.GetAppOverviewByGameID(saveinfo.game_id).display_name} snapshot taken`,
             icon: <FiDownload />,
           });
       }).catch(error =>
-          console.error('Deckshot backup', error)
-        )
+        console.error('Deckshot backup', error)
+      )
     }
   })
 
-  let sid = new SteamID(App.m_CurrentUser.strSteamID); 
+  let sid = new SteamID(App.m_CurrentUser.strSteamID);
 
   serverApi.callPluginMethod("set_account_id", {
     id_num: sid.accountid
@@ -235,7 +213,6 @@ export default definePlugin((serverApi: ServerAPI) => {
     icon: <FiDownload />,
     onDismount() {
       taskHook!.unregister();
-      serverApi.routerHook.removeRoute("/deckshot");
     },
   };
 });
