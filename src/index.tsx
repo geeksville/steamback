@@ -2,44 +2,84 @@ import {
   ButtonItem,
   definePlugin,
   DialogButton,
-  Menu,
-  MenuItem,
+  // Menu, MenuItem, showContextMenu,
   PanelSection,
   PanelSectionRow,
   Router,
   ServerAPI,
-  showContextMenu,
   staticClasses,
   SteamClient,
   LifetimeNotification
 } from "decky-frontend-lib";
-import { VFC } from "react";
-import { FaShip, FaReact } from "react-icons/fa";
+import { VFC, useState, useRef, useEffect } from "react";
 import { FiDownload, FiUpload } from "react-icons/fi";
 import SteamID from "steamid";
 
-import logo from "../assets/logo.png";
+// import logo from "../assets/logo.png";
 
 declare let App: any
 
-const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
-  // const [result, setResult] = useState<number | undefined>();
+interface SaveInfo {
+  game_id: number;
+  timestamp: number;
+  filename: string;
+  is_undo: boolean
+}
 
-  // const onClick = async () => {
-  //   const result = await serverAPI.callPluginMethod<AddMethodArgs, number>(
-  //     "add",
-  //     {
-  //       left: 2,
-  //       right: 2,
-  //     }
-  //   );
-  //   if (result.success) {
-  //     setResult(result.result);
-  //   }
-  // };
-  
+
+const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
+  const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([]);
+  const ref = useRef(true);
+
+  // FIXME nasty hack to check if this is our first render.  Only then do we do our plugin read
+  // per https://www.developerupdates.com/blog/how-to-check-if-react-functional-component-first-time-render-using-hooks
+  useEffect(() => {
+    const firstRender = ref.current;
+
+    if (firstRender) {
+      ref.current = false;
+      console.log('First Render');
+
+      const fetchSaves = (async function () {
+        const saveinfo = (await serverAPI.callPluginMethod("get_saveinfos", {}))
+        console.log("deckshot saveinfos", saveinfo)
+        if (saveinfo.success)
+          setSaveInfos(saveinfo.result as SaveInfo[])
+      })
+      fetchSaves()
+    } else {
+      console.log('Not a first Render');
+    }
+  })
+
   return (
-    <PanelSection title="Panel Section">
+    <PanelSection title="Snapshots">
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below">
+          Server says yolo
+        </ButtonItem>
+      </PanelSectionRow>
+
+      {
+        Object.values(saveInfos).map(si => {
+          console.log('printing ', si);
+          <PanelSectionRow>
+            <ButtonItem
+              layout="below">
+              Server says yolo
+            </ButtonItem>
+          </PanelSectionRow>
+        })
+      }
+
+    </PanelSection>
+  );
+};
+
+/*
+old code
+
       <PanelSectionRow>
         <ButtonItem
           layout="below"
@@ -75,9 +115,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
           Router
         </ButtonItem>
       </PanelSectionRow>
-    </PanelSection>
-  );
-};
+*/
 
 const DeckshotPluginRouter: VFC = () => {
   return (
@@ -120,21 +158,23 @@ export default definePlugin((serverApi: ServerAPI) => {
   // YAY! Deckshot RegisterForAppLifetimeNotifications {unAppID: 648800, nInstanceID: 28768, bRunning: true} is a
   // LifetimeNotification
   const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications((n: LifetimeNotification) => {
-    console.log("Deckshot AppLifetimeNotification", n);
+    // console.log("Deckshot AppLifetimeNotification", n);
 
     if (!n.bRunning) {
       serverApi.callPluginMethod("do_backup", {
         game_id: n.unAppID
       }).then((r) => {
         const saveinfo = r.result
-        console.log("deckshot backup results ", saveinfo)
+        console.log("deckshot backup results", saveinfo)
         if (saveinfo)
           serverApi.toaster.toast({
             title: 'Deckshot',
             body: 'Save game snapshot taken',
             icon: <FiDownload />,
           });
-      })
+      }).catch(error =>
+          console.error('Deckshot backup', error)
+        )
     }
   })
 
@@ -147,8 +187,8 @@ export default definePlugin((serverApi: ServerAPI) => {
 
   return {
     title: <div className={staticClasses.Title}>Deckshot</div>,
-    content: <Content serverAPI={serverApi} />,
-    icon: <FaShip />,
+    content: <DeckshotContent serverAPI={serverApi} />,
+    icon: <FiDownload />,
     onDismount() {
       taskHook!.unregister();
       serverApi.routerHook.removeRoute("/deckshot");
