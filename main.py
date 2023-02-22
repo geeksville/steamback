@@ -120,6 +120,15 @@ class Plugin:
             logger.debug(f'No vdf {path}')
             return None
 
+    """Get the root directory this game uses for its save files
+    """
+    def _get_game_root(self, game_id: int) -> str:
+        gameDir = self._get_gamedir(game_id)
+
+        # We currently only work with saves in this directory
+        spath = os.path.join(gameDir, 'remote')
+        return spath
+
     """
     Parse valve vdf json objects and copy named files
 
@@ -142,7 +151,7 @@ class Plugin:
     def _copy_by_vdf(self, vdf: list, src_dir: str, dest_dir: str):
         logger.debug(f'Copying from { src_dir } to { dest_dir }')
         for k in vdf:
-            spath = os.path.join(src_dir, 'remote', k) # We currently only work with saves in this directory
+            spath = os.path.join(src_dir, k) 
 
             # if the filename contains directories - create them
             if os.path.exists(spath):
@@ -155,20 +164,18 @@ class Plugin:
             else:
                 logger.warn(f'Not copying missing file { k }')
 
-    """
-    Get full paths to existing files mentioned in vdf.
-    """
-    def _get_vdf_paths(self, vdf: list, src_dir: str) -> list:
-        # We currently only work with saves in this directory
-        paths = map(lambda k: os.path.join(src_dir, 'remote', k), vdf)
-        paths = list(filter(lambda p: os.path.exists(p), paths))
-        return paths
+
 
     """
     Find the timestamp of the most recently updated file in a vdf
     """
-    def _get_vdf_timestamp(self, vdf: list, src_dir: str) -> int:
-        full = self._get_vdf_paths(vdf, src_dir)
+    def _get_vdf_timestamp(self, vdf: list, game_id: int) -> int:
+        src_dir = self._get_game_root(game_id)
+
+        # Get full paths to existing files mentioned in vdf.
+        paths = map(lambda k: os.path.join(src_dir, k), vdf)
+        full = list(filter(lambda p: os.path.exists(p), paths))
+
         m_times = list(map(lambda f: os.path.getmtime(f), full))
         max_time = int(round(max(m_times) * 1000)) # we use msecs not secs
         return max_time
@@ -255,7 +262,7 @@ class Plugin:
             self = pinstance
 
         game_id = int(game_id) # force int type, javascript comes across as strs
-        gameDir = self._get_gamedir(game_id)
+        gameDir = self._get_game_root(game_id)
         logger.info(f'got gamedir { gameDir }')
         vdf = self._read_vdf(game_id)
 
@@ -264,7 +271,7 @@ class Plugin:
         
         newest_save = await self._get_newest_save(game_id)
         if newest_save and self.ignore_unchanged:
-            game_timestamp = self._get_vdf_timestamp(vdf, gameDir)
+            game_timestamp = self._get_vdf_timestamp(vdf, game_id)
             if newest_save["timestamp"] > game_timestamp:
                 logger.warn(f'Skipping backup for { game_id } - no changed files')
                 return None
@@ -280,18 +287,19 @@ class Plugin:
     """
     async def do_restore(self, save_info: dict):
         self = fixself(self)
-        logger.info(f'Attempting restore of { save_info }')
         game_id = save_info["game_id"]
         vdf = self._read_vdf(game_id)
         assert vdf
-        gameDir = self._get_gamedir(game_id)
+        gameDir = self._get_game_root(game_id)
         
         # first make the backup (unless restoring from an undo already)
         if not save_info["is_undo"]:
+            logger.info('Generating undo files')
             undoInfo = self._create_savedir(game_id, is_undo=True)
             self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(undoInfo))
 
         # then restore from our old snapshot
+        logger.info(f'Attempting restore of { save_info }')
         self._copy_by_vdf(vdf, self._saveinfo_to_dir(save_info), gameDir)
 
         await self._cull_old_saves() # we now might have too many undos, so possibly delete one

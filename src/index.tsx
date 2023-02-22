@@ -126,12 +126,12 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
             )
           }
 
-          const runningApps = new Set(Router.RunningApps.map(a => a.appid))
-          console.log("running apps", runningApps)
+          const runningApps = new Set(Router.RunningApps.map(a => parseInt(a.appid)))
+          // console.log("running apps", runningApps, si.game_id, runningApps.has(si.game_id))
           const buttonText = si.is_undo ? `Undo ${appDetails.display_name} changes` : `${appDetails.display_name} ${agoStr}`
           return <PanelSectionRow>
             <ButtonItem onClick={askRestore}
-              disabled={ runningApps.has(si.game_id.toString()) } // Don't let user restore files while game is running
+              disabled={ runningApps.has(si.game_id) } // Don't let user restore files while game is running
               layout="below">
               {buttonText}
             </ButtonItem>
@@ -159,6 +159,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   return (
     <div>
       <span style={{ padding: '1rem', display: 'block' }}><a href={helpUrl} onClick={async () => {
+        Navigation.CloseSideMenus()
         Navigation.NavigateToExternalWeb(
           `${helpUrl}`
         )
