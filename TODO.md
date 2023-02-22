@@ -1,5 +1,6 @@
 # General plan
 
+THIS IS (currently) a mostly unformatted set of notes.  If you aren't the dev for this project you probably don.t want it.
 
 react-devtools --no-sandbox
 
@@ -7,7 +8,8 @@ react-devtools --no-sandbox
 
 
 * add an icon for the plugin
-* 
+
+```
 f = await window.SteamClient.InstallFolder.GetInstallFolders()
 f[0].vecApps
 (21) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
@@ -101,6 +103,7 @@ review_score: (...)
 status_percentage: (...)
 store_category: (...)
 store_tag: (...)
+```
 
 ##  python todo
 
@@ -147,7 +150,8 @@ https://partner.steamgames.com/doc/features/cloud
 decky info:
 https://wiki.deckbrew.xyz/en/user-guide/home#plugin-development
 
-my account ID seems to be 49847735
+```
+my account ID seems to be x
 valheim app id is 892970
 
  find /home/kevinh/.steam -name  steam_autocloud.vdf 
@@ -240,6 +244,7 @@ all vdf files inside of userdata
 /home/kevinh/.steam/debian-installation/userdata/49847735/241100/remote/2916630005_controller_config.vdf
 /home/kevinh/.steam/debian-installation/userdata/49847735/206440/remotecache.vdf
 /home/kevinh/.steam/debian-installation/userdata/49847735/200510/remotecache.vdf
+```
 
 Plan:
 Find apps based on remotecache.vdf
@@ -256,6 +261,7 @@ less /home/kevinh/.steam/debian-installation/userdata/49847735/264710/remotecach
 
 sample from xcom2:
 
+```
 kevinh@kdesktop:~/3dprinting$ cat /home/kevinh/.steam/debian-installation/userdata/49847735/268500/remotecache.vdf
 "268500"
 {
@@ -346,6 +352,8 @@ kevinh@kdesktop:~/3dprinting$ cat /home/kevinh/.steam/debian-installation/userda
 		"platformstosync2"		"-1"
 	}
 }
+```
+
 (base) kevinh@kdesktop:~/3dprinting$ 
 
 Web api to get app info (including name)
