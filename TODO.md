@@ -4,6 +4,8 @@ figure out how to access SteamClient.Apps from either python or JS
 
 react-devtools --no-sandbox
 
+FIXME - properly list undo files
+FIXME - list eligible games
 FIXME - update pull request on template
 FIXME - delete unneeded forks
 

@@ -9,7 +9,9 @@ import {
   ServerAPI,
   staticClasses,
   SteamClient,
-  LifetimeNotification
+  LifetimeNotification,
+  showModal,
+  ConfirmModal
 } from "decky-frontend-lib";
 import { VFC, useState, useRef, useEffect } from "react";
 import { FiDownload, FiUpload } from "react-icons/fi";
@@ -19,7 +21,19 @@ import en from "javascript-time-ago/locale/en"
 
 // import logo from "../assets/logo.png";
 
+// FIXME - find a better source for these defs?, I'm hand specifying here
+// based on looking at ProtonDB plugin
 declare let App: any
+type AppOverview = {
+  app_type: number
+  appid: string
+  display_name: string
+  // display_status: DisplayStatus
+  sort_as: string
+}
+declare namespace appStore {
+  function GetAppOverviewByGameID(appId: number): AppOverview
+}
 
 interface SaveInfo {
   game_id: number;
@@ -55,26 +69,48 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       console.log('Not a first Render');
     }
   })
-
+  
   return (
     <div>
       <PanelSection title="Settings">
       </PanelSection>
       <PanelSection title="Snapshots">
-        <PanelSectionRow>
-          <ButtonItem
-            layout="below">
-            Server says yolo
-          </ButtonItem>
-        </PanelSectionRow>
-
         {
           saveInfos.map(si => {
             console.log('showing saveinfo ', si);
+
+            const appDetails = appStore.GetAppOverviewByGameID(si.game_id)
+            const agoStr = timeAgo.format(new Date(si.timestamp))
+
+            const doRestore = () => {
+              serverAPI.callPluginMethod("do_restore", {
+                save_info: si
+              }).then(() => {
+                  serverAPI.toaster.toast({
+                    title: 'Deckshot',
+                    body: `Reverted ${ appDetails.display_name} from snapshot`,
+                    icon: <FiUpload />,
+                  });
+              }).catch(error =>
+                console.error('Deckshot restore', error)
+              )
+            }
+
+            // raise a modal dialog to confirm the user wants to restore
+            const askRestore = () => {
+              showModal(
+                <ConfirmModal
+                  onOK= { doRestore }
+                  strTitle="Revert to snapshot"
+                  strDescription={`Are you sure you want to revert ${appDetails.display_name} to the save from ${ agoStr }?`}
+                />, window
+              )
+            }
+
             return <PanelSectionRow>
-              <ButtonItem
+              <ButtonItem onClick={ askRestore }
                 layout="below">
-                SI { si.game_id }: { timeAgo.format(new Date(si.timestamp)) }
+                { appDetails.display_name } { agoStr }
               </ButtonItem>
             </PanelSectionRow>
           })
@@ -174,12 +210,12 @@ export default definePlugin((serverApi: ServerAPI) => {
       serverApi.callPluginMethod("do_backup", {
         game_id: n.unAppID
       }).then((r) => {
-        const saveinfo = r.result
+        const saveinfo = r.result as SaveInfo
         console.log("deckshot backup results", saveinfo)
         if (saveinfo)
           serverApi.toaster.toast({
             title: 'Deckshot',
-            body: 'Save game snapshot taken',
+            body: `${ appStore.GetAppOverviewByGameID(saveinfo.game_id).display_name } snapshot taken`,
             icon: <FiDownload />,
           });
       }).catch(error =>
