@@ -155,7 +155,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       }
     </ul>
 
-  const helpUrl = "https://github.com/geeksville/deckshot"
+  const helpUrl = "https://github.com/geeksville/deckshot/blob/main/README.md"
   return (
     <div>
       <span style={{ padding: '1rem', display: 'block' }}><a href={helpUrl} onClick={async () => {

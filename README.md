@@ -4,7 +4,7 @@ Deckshot is a plugin for [decky-loader](https://github.com/SteamDeckHomebrew/dec
 
 These snapshots allow you to 'rewind' to previous save-game versions.  This is particularly useful if your game only offers one save-game and (like me) are a poor game player and you want to rewind to the version from yesterday or last week.
 
-This plug-in is currently in alpha-testing.  Please check for updates to the deckshot plugin occasionally.  If you see bugs, please file an issue at our github.
+This plug-in is currently in alpha-testing.  Please check for updates to the deckshot plugin occasionally.  If you see bugs, please file an [issue](https://github.com/geeksville/deckshot/issues) at our github.
 
 ![Deckshot settings](docs/../doc/screenshot.jpeg)
 
@@ -29,7 +29,7 @@ Deckshot will then rewind to that save game.  Also (because this plugin is still
 
 Not all games are supported. This plugin only supports games that use the steam 'cloud save' API. And the current version of this plugin (it should improve) is limited to games that use a particular variant of that API.  We do this because we try (YMMV) to be very _safe_ wrt. your save games.
 
-The plugin will show what games you have installed that ** are ** supported.  For the main developer of this plugin it seems that about 25% of his Steam library is supported currently.
+The plugin will show what games you have installed that **are** supported.  For the main developer of this plugin it seems that about 25% of his Steam library is supported currently.
 
 We are working on adding support for a broader set of 'cloud backup' games. (We use the Steam cloud backup data to tell us what files we should snapshot)
 
