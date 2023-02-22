@@ -62,12 +62,12 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       </PanelSectionRow>
 
       {
-        Object.values(saveInfos).map(si => {
-          console.log('printing ', si);
-          <PanelSectionRow>
+        saveInfos.map(si => {
+          console.log('showing saveinfo ', si);
+          return <PanelSectionRow>
             <ButtonItem
               layout="below">
-              Server says yolo
+              Server says yolox
             </ButtonItem>
           </PanelSectionRow>
         })
