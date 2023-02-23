@@ -151,7 +151,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
         Navigation.NavigateToExternalWeb(
           `${helpUrl}`
         )
-      }}>Steamback</a> automatically takes save-game snapshots for many Steam games. See our github page for more information.</span>
+      }}>Steamback</a> automatically makes save-game snapshots for many Steam games. See our github page for more information.</span>
 
       {snapshotHtml}
 
