@@ -101,7 +101,7 @@ class Plugin:
         # we want the directories that contained the autocloud
         dirs = list(map(lambda f: str(f.parent), files))
 
-        logger.debug(f'Autoclouds in { rootdir } are { dirs }')
+        # logger.debug(f'Autoclouds in { rootdir } are { dirs }')
         return dirs
 
     """
@@ -190,7 +190,7 @@ class Plugin:
 
         rcf = []
         if os.path.isfile(path):
-            logger.debug(f'Read rcf {path}')
+            # logger.debug(f'Read rcf {path}')
             with open(path) as f:
                 s = f.read()  # read full file as a string
                 lines = s.split('\n')
@@ -326,7 +326,7 @@ class Plugin:
         dir = self._get_savesdir()
         with open(os.path.join(dir, filename)) as j:
             si = json.load(j)
-            logger.debug(f'Parsed filename {filename} as {si}')
+            # logger.debug(f'Parsed filename {filename} as {si}')
             return si
 
     """ delete the savedir and associated json
