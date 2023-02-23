@@ -212,11 +212,12 @@ class Plugin:
             d = self._get_game_saves_root(game_info, is_linux_game = True)
             return d
 
-        # We currently (but could someday?) don't support multiple autocloud directories
+        # If multiple autocloud files are found, just search in the root and see if that works
         if len(autoclouds) > 1:
             logger.warn(
-                f'Multiple autoclouds found for { game_info }, can\'t backup')
-            return None
+                f'Multiple autocloud found for { game_info } looking in linux app data')
+            d = self._get_game_saves_root(game_info, is_linux_game=True)
+            return d
 
         return self._find_save_root_from_autoclouds(game_info, rcf, autoclouds[0])
 
