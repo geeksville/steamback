@@ -1,0 +1,180 @@
+misc notes:
+app files installed at:
+(steam autocloud.vdf file in this directory)
+
+(base) kevinh@kdesktop:~/development/steamdeck/steamback$ ls /home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/Documents/my\ games/XCOM2/XComGame/SaveData/
+profile.bin  save1  save10  save11  save12  save2  save3  save4  save5  save6  save7  save8  save9  steam_autocloud.vdf
+
+(base) kevinh@kdesktop:~/development/steamdeck/steamback$ find /home/kevinh/.steam -name steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/common/Subnautica/SNAppData/SavedGames/steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/common/Steam Controller Configs/49847735/config/steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/Documents/my games/XCOM2 War of the Chosen/XComGame/SaveData/steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/Documents/my games/XCOM2/XComGame/SaveData/steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/My Documents BACKUP/my games/XCOM2 War of the Chosen/XComGame/SaveData/steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/My Documents BACKUP/my games/XCOM2/XComGame/SaveData/steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/892970/pfx/drive_c/users/steamuser/AppData/LocalLow/IronGate/Valheim/worlds/steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/892970/pfx/drive_c/users/steamuser/AppData/LocalLow/IronGate/Valheim/characters/steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/1450900/pfx/drive_c/users/steamuser/Local Settings/Application Data/Desynced/Saved/SaveGames/steam_autocloud.vdf
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/648800/pfx/drive_c/users/steamuser/AppData/LocalLow/Redbeet Interactive/Raft/User/User_76561198010113463/steam_autocloud.vdf
+
+"268500"
+{
+	"ChangeNumber"		"-7737990108396897046"
+	"ostype"		"-184"
+	"my games/XCOM2/XComGame/SaveData/profile.bin"
+	{
+		"root"		"2"
+		"size"		"16695"
+		"localtime"		"1671512391"
+		"time"		"1671512390"
+		"remotetime"		"1671512390"
+		"sha"		"52ef850ad7ab63bdabf13ef6af648891e4a26682"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save1"
+	{
+		"root"		"2"
+		"size"		"342436"
+		"localtime"		"1671500009"
+		"time"		"1671500008"
+		"remotetime"		"1671500008"
+		"sha"		"fef121776d2c49c7369fea96c851d5694914ad46"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save2"
+	{
+		"root"		"2"
+		"size"		"745383"
+		"localtime"		"1671511978"
+		"time"		"1671511977"
+		"remotetime"		"1671511977"
+		"sha"		"755ad4c8a0f7f4c476e3edc60bafaac08abfef03"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save3"
+	{
+		"root"		"2"
+		"size"		"160191"
+		"localtime"		"1671424081"
+		"time"		"1671424080"
+		"remotetime"		"1671424080"
+		"sha"		"b0860b4940024abb8a332762d9d9915adeae0d70"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save4"
+	{
+		"root"		"2"
+		"size"		"881625"
+		"localtime"		"1671512392"
+		"time"		"1671512391"
+		"remotetime"		"1671512391"
+		"sha"		"7060c1e90cda662eab667f7bc33beb18510350cf"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save5"
+	{
+		"root"		"2"
+		"size"		"645231"
+		"localtime"		"1671511731"
+		"time"		"1671511730"
+		"remotetime"		"1671511730"
+		"sha"		"7ce3b4acc2cbefa53527a8b5b0a7d12e7c8205db"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save6"
+	{
+		"root"		"2"
+		"size"		"215980"
+		"localtime"		"1671427173"
+		"time"		"1671427172"
+		"remotetime"		"1671427172"
+		"sha"		"4576b983dea60ed34eb178a2b808f0737fe181ed"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save10"
+	{
+		"root"		"2"
+		"size"		"447771"
+		"localtime"		"1671500816"
+		"time"		"1671500815"
+		"remotetime"		"1671500815"
+		"sha"		"9fcdce62608eae1ac5b85472da1a1ddc7d673ec5"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save11"
+	{
+		"root"		"2"
+		"size"		"553741"
+		"localtime"		"1671507964"
+		"time"		"1671507964"
+		"remotetime"		"1671507964"
+		"sha"		"adec0119494c1b227a11fa86f248ead55a2d1dbc"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save12"
+	{
+		"root"		"2"
+		"size"		"497010"
+		"localtime"		"1671510975"
+		"time"		"1671510974"
+		"remotetime"		"1671510974"
+		"sha"		"56ee6091a6d4ffaeb8af009de3732fd699fd9c98"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save7"
+	{
+		"root"		"2"
+		"size"		"293267"
+		"localtime"		"1671493223"
+		"time"		"1671493222"
+		"remotetime"		"1671493222"
+		"sha"		"d873ad81948450ba5febd386d48d31a691045dd8"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save8"
+	{
+		"root"		"2"
+		"size"		"323773"
+		"localtime"		"1671495692"
+		"time"		"1671495691"
+		"remotetime"		"1671495691"
+		"sha"		"9a7acc15a2f45ca0c59286388d72c1b8c0a1a662"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+	"my games/XCOM2/XComGame/SaveData/save9"
+	{
+		"root"		"2"
+		"size"		"333090"
+		"localtime"		"1671496166"
+		"time"		"1671496165"
+		"remotetime"		"1671496165"
+		"sha"		"9dbc14617017bc99a8333efbdbfb98e356e11f57"
+		"syncstate"		"1"
+		"persiststate"		"0"
+		"platformstosync2"		"-1"
+	}
+}
