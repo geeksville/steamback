@@ -77,9 +77,9 @@
             "type": "shell",
             "group": "none",
             "dependsOn": [],
-            "command": "ssh deck@${config:deckip} -p ${config:deckport} ${config:deckkey} 'echo '${config:deckpass}' | sudo -S sudo systemctl restart plugin_loader'",
+            "command": "ssh deck@${config:deckip} -p ${config:deckport} ${config:deckkey} 'echo '${config:deckpass}' | sudo -S systemctl restart plugin_loader'",
             "problemMatcher": []
-        },        
+        },
         {
             "label": "chmodfolders",
             "detail": "chmods folders to prevent perms issues",

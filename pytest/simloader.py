@@ -1,3 +1,7 @@
+import sys
+sys.path.append('..')
+sys.path.append('../../decky-loader/plugin')
+
 import asyncio
 from main import *
 
