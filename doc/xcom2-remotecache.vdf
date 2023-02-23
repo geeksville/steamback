@@ -17,6 +17,56 @@ profile.bin  save1  save10  save11  save12  save2  save3  save4  save5  save6  s
 /home/kevinh/.steam/debian-installation/steamapps/compatdata/1450900/pfx/drive_c/users/steamuser/Local Settings/Application Data/Desynced/Saved/SaveGames/steam_autocloud.vdf
 /home/kevinh/.steam/debian-installation/steamapps/compatdata/648800/pfx/drive_c/users/steamuser/AppData/LocalLow/Redbeet Interactive/Raft/User/User_76561198010113463/steam_autocloud.vdf
 
+algorithm:
+iterate over f = await window.SteamClient.InstallFolder.GetInstallFolders()....strFolderPath
+
+for each of those paths look in:
+
+$ROOT/steamapps/common/$AppDisplayName/...steam_autocloud.vdf 
+and
+$ROOT/steamapps/compatdata/$AppIdNum/...steam_autocloud.vdf
+to find root dirs for backup/restore. 
+
+let's call that dir (that had the autocloud file) $ACROOT
+
+for subnautica that would be:
+/home/kevinh/.steam/debian-installation/steamapps/common/Subnautica/SNAppData/SavedGames/
+
+Looking at the first entry in the subnautica remotecache.vdf file (call this $RCREF):
+
+SNAppData/SavedGames/options/9e07478a181f6adcb95db7db8b075d74b394f2c7-options.bin
+
+Find the directory names that are common to both the TAIL of $ACROOT and the HEAD of $RCREF.  Call this $RCCOMMON
+
+SNAppData/SavedGames/
+
+remove $RCCOMMON from the tail of $ACROOT to be the new game backup root (similar to the 'remote' directory when that directory is present):
+
+/home/kevinh/.steam/debian-installation/steamapps/common/Subnautica
+
+Using this directory as the root you can now apply paths mentioned in remotecache successfully!
+
+---
+
+xcom2 has four ACROOTS
+
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/Documents/my games/XCOM2 War of the Chosen/XComGame/SaveData/
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/Documents/my games/XCOM2/XComGame/SaveData/
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/My Documents BACKUP/my games/XCOM2 War of the Chosen/XComGame/SaveData
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/My Documents BACKUP/my games/XCOM2/XComGame/SaveData
+
+
+in that case we scan through the candidates to find the longest $RCCOMON we can find:
+
+my games/XCOM2/XComGame/SaveData/
+
+This leaves us with two candidates:
+
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/Documents/my games/XCOM2/XComGame/SaveData/
+/home/kevinh/.steam/debian-installation/steamapps/compatdata/268500/pfx/drive_c/users/steamuser/My Documents BACKUP/my games/XCOM2/XComGame/SaveData
+
+we should reject doing backups on this game because we can't know which dir.
+
 "268500"
 {
 	"ChangeNumber"		"-7737990108396897046"
