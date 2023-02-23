@@ -29,6 +29,18 @@ async def main():
 
     valheim = make_game_info(892970, "Valheim")
     subnautica = make_game_info(264710, "Subnautica")
+    subnauticabz = make_game_info(848450, "Subnautica Below Zero")
+
+    # Use less /home/kevinh/.steam/debian-installation/steamapps/appmanifest_848450.acf to find "installdir" property
+    # /home/kevinh/.steam/debian-installation/steamapps/common/SubnauticaZero/SNAppData/SavedGames/
+
+    # FIXME - require one matching rcf file to exist to declare game backupable (to confirm our paths are good)
+    # FIXME - compare appmanifest for windows game also.
+    # If there is no valve_autocloud.vdf we should still allow backups, but assume the root directory matches "installdir"
+
+    si = await p.do_backup(subnauticabz)
+    print(f'SubnauticaBZ backup results: { si }')
+    assert si is not None
 
     si = await p.do_backup(subnautica)
     print(f'Subnautica backup results: { si }')

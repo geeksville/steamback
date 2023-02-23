@@ -3,7 +3,7 @@ import json
 import time
 import os
 import shutil
-import logging
+import logging, re
 from pathlib import Path
 
 # The decky plugin module is located at decky-loader/plugin
@@ -24,7 +24,6 @@ pinstance = None
 
 """Work around for busted decky creation"""
 
-
 def fixself(self) -> object:
     global pinstance
 
@@ -35,6 +34,21 @@ def fixself(self) -> object:
         self = pinstance
     return self
 
+"""Try to parse a valve vdf file.  Looking for an entry with the specified key.
+If found return the value that goes with that key, else return None.
+
+(Used to parse appmanifest_GAMEID.acf files finding "installdir")
+"""
+
+def _parse_vcf(path: str, key: str) -> str:
+    kvMatch = re.compile('\s*"(.+)"\s+"(.+)"\s*')
+    with open(path) as f:
+        for line in f:
+            # ignore leading/trailing space.  Now ideal like looks like "key"   "value"
+            m = kvMatch.fullmatch(line)
+            if m and m.group(1) == key:
+                return m.group(2)
+    return None
 
 class Plugin:
     def __init__(self):
@@ -81,27 +95,50 @@ class Plugin:
         r = "/home/deck/.local/share/Steam/userdata" if is_decky else "/home/kevinh/.steam/debian-installation/userdata"
         return os.path.join(r, str(self.account_id), str(game_id))
 
-    """
-    Find all directories that contain steam_autocloud.vdf files or None
+    """read installdir from appmanifest_gameid.vdf and return it
     """
 
-    def _find_autoclouds(self, game_info, is_linux_game: bool) -> list[str]:
+    def _get_steamapps_dir(self, game_info: dict) -> str:
         assert game_info["install_root"]
         steamApps = os.path.join(game_info["install_root"], "steamapps")
+        return steamApps
+
+    """read installdir from appmanifest_gameid.vdf and return it (or None if not found)
+    """
+    def _parse_appmanifest(self, game_info: dict) -> str:
+        appdir = self._get_steamapps_dir(game_info)
+        installdir = _parse_vcf(os.path.join(appdir, f'appmanifest_{ game_info["game_id"] }.acf'), "installdir")
+        return installdir
+
+    """
+    Find the root directory for where savegames might be found for either windows or linux
+    """
+
+    def _get_game_saves_root(self, game_info: dict, is_linux_game: bool) -> list[str]:
+        steamApps = self._get_steamapps_dir(game_info)
 
         if is_linux_game:
-            assert game_info["game_name"]
-            rootdir = os.path.join(steamApps, "common", game_info["game_name"])
+            installdir = self._parse_appmanifest(game_info)
+            rootdir = os.path.join(steamApps, "common", installdir)
         else:
             rootdir = os.path.join(
                 steamApps, f'compatdata/{ game_info["game_id" ] }/pfx/drive_c/users/steamuser')
 
-        p = Path(rootdir)
+        return rootdir
+
+    """
+    Find all directories that contain steam_autocloud.vdf files or None
+    """
+
+    def _find_autoclouds(self, game_info: dict, is_linux_game: bool) -> list[str]:
+        root_dir = self._get_game_saves_root(game_info, is_linux_game)
+
+        p = Path(root_dir)
         files = p.rglob("steam_autocloud.vdf")
         # we want the directories that contained the autocloud
         dirs = list(map(lambda f: str(f.parent), files))
 
-        # logger.debug(f'Autoclouds in { rootdir } are { dirs }')
+        # logger.debug(f'Autoclouds in { root_dir } are { dirs }')
         return dirs
 
     """
@@ -165,12 +202,15 @@ class Plugin:
 
         # FIXME, cache this expensive result
         autoclouds = self._find_autoclouds(game_info, is_linux_game=True)
+
+        # Not found on linux, try looking in windows
         if not autoclouds:
             autoclouds = self._find_autoclouds(game_info, is_linux_game=False)
 
         if not autoclouds or len(autoclouds) == 0:
-            logger.warn(f'No autocloud found for { game_info }, can\'t backup')
-            return None
+            logger.warn(f'No autocloud found for { game_info } looking in linux app data')
+            d = self._get_game_saves_root(game_info, is_linux_game = True)
+            return d
 
         # We currently (but could someday?) don't support multiple autocloud directories
         if len(autoclouds) > 1:
@@ -179,6 +219,17 @@ class Plugin:
             return None
 
         return self._find_save_root_from_autoclouds(game_info, rcf, autoclouds[0])
+
+    """ 
+    confirm that at least one savegame exists, to validate our assumptions about where they are being stored
+    if no savegame found claim we can't back this app up.
+    """
+    def _rcf_is_valid(self, game_info: dict, rcf: list[str]):
+        rootdir = game_info["save_games_root"]
+        for f in rcf:
+            if os.path.isfile(os.path.join(rootdir, f)):
+                return True
+        return False
 
     """
     Read the rcf file for the specified game, or if not found return None
@@ -231,6 +282,13 @@ class Plugin:
                 return None
             else:
                 game_info["save_games_root"] = saveRoot
+
+        # confirm that at least one savegame exists, to validate our assumptions about where they are being stored
+        # if no savegame found claim we can't back this app up.
+        if not self._rcf_is_valid(game_info, rcf):
+            logger.warn(
+                f'RCF seems invalid, not backing up { game_info }')
+            return None
 
         # logger.debug(f'rcf files are {r}')
         return rcf

@@ -17,6 +17,22 @@ profile.bin  save1  save10  save11  save12  save2  save3  save4  save5  save6  s
 /home/kevinh/.steam/debian-installation/steamapps/compatdata/1450900/pfx/drive_c/users/steamuser/Local Settings/Application Data/Desynced/Saved/SaveGames/steam_autocloud.vdf
 /home/kevinh/.steam/debian-installation/steamapps/compatdata/648800/pfx/drive_c/users/steamuser/AppData/LocalLow/Redbeet Interactive/Raft/User/User_76561198010113463/steam_autocloud.vdf
 
+grep installdir /home/kevinh/.steam/debian-installation/steamapps/appmanifest_*
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_1318690.acf:	"installdir"		"shapez.io"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_1391110.acf:	"installdir"		"SteamLinuxRuntime_soldier"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_1493710.acf:	"installdir"		"Proton - Experimental"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_1887720.acf:	"installdir"		"Proton 7.0"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_228980.acf:	"installdir"		"Steamworks Shared"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_242760.acf:	"installdir"		"The Forest"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_250820.acf:	"installdir"		"SteamVR"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_264710.acf:	"installdir"		"Subnautica"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_268500.acf:	"installdir"		"XCOM 2"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_648800.acf:	"installdir"		"Raft"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_848450.acf:	"installdir"		"SubnauticaZero"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_892970.acf:	"installdir"		"Valheim"
+/home/kevinh/.steam/debian-installation/steamapps/appmanifest_943760.acf:	"installdir"		"SteamOSDevkitClient"
+
+
 algorithm:
 iterate over f = await window.SteamClient.InstallFolder.GetInstallFolders()....strFolderPath
 
