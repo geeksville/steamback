@@ -14,8 +14,6 @@ logger=decky_plugin.logger
 # logger.setLevel(logging.INFO) # can be changed to logging.DEBUG for debugging issues
 # can be changed to logging.DEBUG for debugging issues
 
-# FIXME use os.environ["DECKY_PLUGIN_RUNTIME_DIR"] to find our prefs dir, if not defined assume desktop testing
-
 logger.setLevel(logging.DEBUG)
 
 is_decky = True
