@@ -38,6 +38,10 @@ async def main():
     print(f'Valheim backup results: { si }')
     assert si is not None
 
+    # Test a game with formerly unsupported vdf (raft)
+    si = await p.do_backup(make_game_info(648800, "Raft"))
+    assert si is not None
+
     p.ignore_unchanged = True  # following backup should be skipped because no changes
     si = await p.do_backup(valheim)
     assert si is None
@@ -45,10 +49,6 @@ async def main():
     # Test a game that should not exist
     si = await p.do_backup(make_game_info(555))
     assert si is None
-
-    # Test a game with unsupported vdf (raft)
-    si = await p.do_backup(make_game_info(648800, "Raft"))
-    assert si is not None
 
     # Test find_supported
     candidates = [valheim, subnautica]

@@ -134,12 +134,14 @@ class Plugin:
         # therefore scan backwards from end of string to find first / and then we KNOW everything left of that
         # is a directory.  If we don't find such a slash, that means none of the backup files are using directories
         # and we should just use the existing autocloud dir.
-        dirSplit = rPrefix.rfind('/') # FIXME what about paths where someone used / in the filename!
+        # FIXME what about paths where someone used / in the filename!
+        dirSplit = rPrefix.rfind('/')
         if dirSplit != -1:
-            rPrefix = rPrefix[:dirSplit] # throw away everything after the last slash (and the slash itself)
+            # throw away everything after the last slash (and the slash itself)
+            rPrefix = rPrefix[:dirSplit]
 
             # check the last n characters of autocloud and if they match our prefix, strip them to find the new root
-            autoTail = autocloud[-len(rPrefix):] 
+            autoTail = autocloud[-len(rPrefix):]
             if autoTail == rPrefix:
                 autocloud = autocloud[:-len(rPrefix)]
 
@@ -342,7 +344,9 @@ class Plugin:
                 logger.info(f'Culling { todel }')
                 if not self.dry_run:
                     shutil.rmtree(os.path.join(
-                        self._get_savesdir(), todel["filename"]))
+                        self._get_savesdir(), todel["filename"]), ignore_errors=True)
+                    shutil.rmtree(os.path.join(
+                        self._get_savesdir(), todel["filename"] + ".json"), ignore_errors=True)
 
         delete_oldest(undos, 1)
         delete_oldest(saves, 10)
@@ -427,7 +431,16 @@ class Plugin:
     """
     async def find_supported(self, game_infos: list):
         self = fixself(self)
-        supported = list(filter(lambda info: self._read_rcf(info), game_infos))
+
+        # if we get any sort of exception while scanning a particular game info, keep trying the others
+        def try_rcf(info):
+            try:
+                return self._read_rcf(info)
+            except Exception as e:
+                logger.error(f'Error scanning rcf for {info}')
+                return None
+
+        supported = list(filter(try_rcf, game_infos))
         return supported
 
     """
@@ -445,7 +458,7 @@ class Plugin:
                 si = self._file_to_saveinfo(f)
                 return si
             except Exception as e:
-                logger.warn(f'Error reading JSON for {f}, {e}')
+                logger.error(f'Error reading JSON for {f}, {e}')
                 return None
 
         infos = list(filter(lambda f: f is not None, map(
