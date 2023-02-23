@@ -341,6 +341,9 @@ class Plugin:
     async def _unload(self):
         logger.info("Steamback exiting!")
 
+"""
+    This seems busted for me so leaving off for now... -geeksville
+    
     # Migrations that should be performed before entering `_main()`.
     async def _migration(self):
         decky_plugin.logger.info("Migrating")
@@ -360,3 +363,4 @@ class Plugin:
         decky_plugin.migrate_runtime(
             os.path.join(decky_plugin.DECKY_HOME, "template"),
             os.path.join(decky_plugin.DECKY_USER_HOME, ".local", "share", "decky-template"))
+"""
