@@ -1,6 +1,6 @@
 # Steamback
 
-Steamback is a plugin for [decky-loader](https://github.com/SteamDeckHomebrew/decky-loader).  It adds automatic 'snapshots' of changed savegames for many (but not all - see below) 'steam cloud' enabled games.  
+Steamback is a plugin for [decky-loader](https://deckbrew.xyz/).  It adds automatic 'snapshots' of changed savegames for many (but not all - see below) 'steam cloud' enabled games.  
 
 These snapshots allow you to 'rewind' to previous save-game versions.  This is particularly useful if your game only offers one save-game and (like me) are a poor game player and you want to rewind to the version from yesterday or last week.
 
