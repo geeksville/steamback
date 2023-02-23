@@ -73,9 +73,9 @@ class Plugin:
         return os.path.join(r, str(self.account_id), str(game_id))
 
     """
-    Read the vdf file for the specified game, or if not found return None
+    Read the rcf file for the specified game, or if not found return None
     """
-    def _read_vdf(self, game_id: int) -> list:
+    def _read_rcf(self, game_id: int) -> list:
         d = self._get_gamedir(game_id)
         path = os.path.join(d, "remotecache.vdf")
 
@@ -84,7 +84,7 @@ class Plugin:
             return None
 
         if os.path.isfile(path):
-            logger.debug(f'Read vdf {path}')
+            logger.debug(f'Read rcf {path}')
             with open(path) as f:
                 s = f.read() # read full file as a string
                 lines = s.split('\n') 
@@ -113,10 +113,10 @@ class Plugin:
                     else:
                         prevl = s
 
-                # logger.debug(f'vdf files are {r}')
+                # logger.debug(f'rcf files are {r}')
                 return r
         else:
-            logger.debug(f'No vdf {path}')
+            logger.debug(f'No rcf {path}')
             return None
 
     """Get the root directory this game uses for its save files
@@ -129,7 +129,7 @@ class Plugin:
         return spath
 
     """
-    Parse valve vdf json objects and copy named files
+    Parse valve rcf json objects and copy named files
 
     {
 	"ChangeNumber"		"-6703994677807818784"
@@ -147,9 +147,9 @@ class Plugin:
 		"platformstosync2"		"-1"
 	}
     """
-    def _copy_by_vdf(self, vdf: list, src_dir: str, dest_dir: str):
+    def _copy_by_rcf(self, rcf: list, src_dir: str, dest_dir: str):
         logger.debug(f'Copying from { src_dir } to { dest_dir }')
-        for k in vdf:
+        for k in rcf:
             spath = os.path.join(src_dir, k) 
 
             # if the filename contains directories - create them
@@ -166,13 +166,13 @@ class Plugin:
 
 
     """
-    Find the timestamp of the most recently updated file in a vdf
+    Find the timestamp of the most recently updated file in a rcf
     """
-    def _get_vdf_timestamp(self, vdf: list, game_id: int) -> int:
+    def _get_rcf_timestamp(self, rcf: list, game_id: int) -> int:
         src_dir = self._get_game_root(game_id)
 
-        # Get full paths to existing files mentioned in vdf.
-        paths = map(lambda k: os.path.join(src_dir, k), vdf)
+        # Get full paths to existing files mentioned in rcf.
+        paths = map(lambda k: os.path.join(src_dir, k), rcf)
         full = list(filter(lambda p: os.path.exists(p), paths))
 
         m_times = list(map(lambda f: os.path.getmtime(f), full))
@@ -263,20 +263,20 @@ class Plugin:
         game_id = int(game_id) # force int type, javascript comes across as strs
         gameDir = self._get_game_root(game_id)
         logger.info(f'got gamedir { gameDir }')
-        vdf = self._read_vdf(game_id)
+        rcf = self._read_rcf(game_id)
 
-        if not vdf:
+        if not rcf:
             return None
         
         newest_save = await self._get_newest_save(game_id)
         if newest_save and self.ignore_unchanged:
-            game_timestamp = self._get_vdf_timestamp(vdf, game_id)
+            game_timestamp = self._get_rcf_timestamp(rcf, game_id)
             if newest_save["timestamp"] > game_timestamp:
                 logger.warn(f'Skipping backup for { game_id } - no changed files')
                 return None
 
         saveInfo = self._create_savedir(game_id)
-        self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(saveInfo))
+        self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(saveInfo))
 
         await self._cull_old_saves() 
         return saveInfo
@@ -287,19 +287,19 @@ class Plugin:
     async def do_restore(self, save_info: dict):
         self = fixself(self)
         game_id = save_info["game_id"]
-        vdf = self._read_vdf(game_id)
-        assert vdf
+        rcf = self._read_rcf(game_id)
+        assert rcf
         gameDir = self._get_game_root(game_id)
         
         # first make the backup (unless restoring from an undo already)
         if not save_info["is_undo"]:
             logger.info('Generating undo files')
             undoInfo = self._create_savedir(game_id, is_undo=True)
-            self._copy_by_vdf(vdf, gameDir, self._saveinfo_to_dir(undoInfo))
+            self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(undoInfo))
 
         # then restore from our old snapshot
         logger.info(f'Attempting restore of { save_info }')
-        self._copy_by_vdf(vdf, self._saveinfo_to_dir(save_info), gameDir)
+        self._copy_by_rcf(rcf, self._saveinfo_to_dir(save_info), gameDir)
 
         await self._cull_old_saves() # we now might have too many undos, so possibly delete one
 
@@ -308,7 +308,7 @@ class Plugin:
     """
     async def find_supported(self, game_ids: list):
         self = fixself(self)
-        supported = list(filter(lambda id: self._read_vdf(id), game_ids))
+        supported = list(filter(lambda id: self._read_rcf(id), game_ids))
         return supported
 
     """
