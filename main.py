@@ -329,6 +329,17 @@ class Plugin:
             logger.debug(f'Parsed filename {filename} as {si}')
             return si
 
+    """ delete the savedir and associated json
+    """
+
+    def _delete_savedir(self, filename):
+        shutil.rmtree(os.path.join(
+            self._get_savesdir(), filename), ignore_errors=True)
+        try:
+            os.remove(os.path.join(self._get_savesdir(), filename + ".json"))
+        except OSError:
+            pass
+
     """
     we keep only the most recent undo and the most recent 10 saves
     """
@@ -342,11 +353,8 @@ class Plugin:
             while len(files) > to_keep:
                 todel = files.pop()
                 logger.info(f'Culling { todel }')
-                if not self.dry_run:
-                    shutil.rmtree(os.path.join(
-                        self._get_savesdir(), todel["filename"]), ignore_errors=True)
-                    shutil.rmtree(os.path.join(
-                        self._get_savesdir(), todel["filename"] + ".json"), ignore_errors=True)
+                # if not self.dry_run: we ignore dryrun for culling otherwise our test system dir fills up
+                self._delete_savedir(todel["filename"])
 
         delete_oldest(undos, 1)
         delete_oldest(saves, 10)
@@ -396,9 +404,14 @@ class Plugin:
                 return None
 
         saveInfo = self._create_savedir(game_info)
-        gameDir = self._get_game_root(game_info)
-        logger.info(f'got gamedir { gameDir }')
-        self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(saveInfo))
+        try:
+            gameDir = self._get_game_root(game_info)
+            logger.info(f'got gamedir { gameDir }')
+            self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(saveInfo))
+        except:
+            # Don't keep old directory/json around if we encounter an exception
+            self._delete_savedir(saveInfo["filename"])
+            raise  # rethrow
 
         await self._cull_old_saves()
         return saveInfo
