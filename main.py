@@ -9,7 +9,7 @@ import re
 # or add the `decky-loader/plugin` path to `python.analysis.extraPaths` in `.vscode/settings.json`
 import decky_plugin
 
-logger=decky_plugin.logger
+logger = decky_plugin.logger
 
 # logger.setLevel(logging.INFO) # can be changed to logging.DEBUG for debugging issues
 # can be changed to logging.DEBUG for debugging issues
@@ -21,6 +21,8 @@ is_decky = True
 pinstance = None
 
 """Work around for busted decky creation"""
+
+
 def fixself(self) -> object:
     global pinstance
 
@@ -30,6 +32,7 @@ def fixself(self) -> object:
             pinstance = Plugin()
         self = pinstance
     return self
+
 
 class Plugin:
     def __init__(self):
@@ -42,9 +45,10 @@ class Plugin:
             logger.info('Simulating decky')
 
         self.account_id = 0
-        self.dry_run = False # Set to true to suppress 'real' writes to directories  
+        self.dry_run = False  # Set to true to suppress 'real' writes to directories
         # FIXME not yet implemented
-        self.ignore_unchanged = True # don't generate backups if the files haven't changed since last backup
+        # don't generate backups if the files haven't changed since last backup
+        self.ignore_unchanged = True
 
     async def set_account_id(self, id_num: int):
         self = fixself(self)
@@ -55,10 +59,11 @@ class Plugin:
     """
     Return the saves directory path (creating it if necessary)
     """
+
     def _get_savesdir(self) -> str:
         # We want to allow testing when not running under decky
         r = os.environ["DECKY_PLUGIN_RUNTIME_DIR"] if is_decky else "/tmp/steamback"
-    
+
         p = os.path.join(r, "saves")
         if not os.path.exists(p):
             os.makedirs(p)
@@ -68,6 +73,7 @@ class Plugin:
     """
     Return the path to the game directory for a specified game
     """
+
     def _get_gamedir(self, game_id: int) -> str:
         r = "/home/deck/.local/share/Steam/userdata" if is_decky else "/home/kevinh/.steam/debian-installation/userdata"
         return os.path.join(r, str(self.account_id), str(game_id))
@@ -75,19 +81,21 @@ class Plugin:
     """
     Read the rcf file for the specified game, or if not found return None
     """
+
     def _read_rcf(self, game_id: int) -> list:
         d = self._get_gamedir(game_id)
         path = os.path.join(d, "remotecache.vdf")
 
         if not os.path.isdir(os.path.join(d, "remote")):
-            logger.warn(f'Unable to backup { game_id }: not yet supported') # We currently only understand games that have their saves in teh 'remote' subdir
+            # We currently only understand games that have their saves in teh 'remote' subdir
+            logger.warn(f'Unable to backup { game_id }: not yet supported')
             return None
 
         if os.path.isfile(path):
             logger.debug(f'Read rcf {path}')
             with open(path) as f:
-                s = f.read() # read full file as a string
-                lines = s.split('\n') 
+                s = f.read()  # read full file as a string
+                lines = s.split('\n')
                 # logger.debug(f'file is {lines}')
 
                 # drop first two lines because they are "gameid" {
@@ -98,7 +106,7 @@ class Plugin:
                 skipping = False
                 for l in lines:
                     s = l.strip()
-                    if skipping: # skip the contents of {} records
+                    if skipping:  # skip the contents of {} records
                         if s == "}":
                             skipping = False
                     elif s == "{":
@@ -121,6 +129,7 @@ class Plugin:
 
     """Get the root directory this game uses for its save files
     """
+
     def _get_game_root(self, game_id: int) -> str:
         gameDir = self._get_gamedir(game_id)
 
@@ -147,10 +156,11 @@ class Plugin:
 		"platformstosync2"		"-1"
 	}
     """
+
     def _copy_by_rcf(self, rcf: list, src_dir: str, dest_dir: str):
         logger.debug(f'Copying from { src_dir } to { dest_dir }')
         for k in rcf:
-            spath = os.path.join(src_dir, k) 
+            spath = os.path.join(src_dir, k)
 
             # if the filename contains directories - create them
             if os.path.exists(spath):
@@ -163,11 +173,10 @@ class Plugin:
             else:
                 logger.warn(f'Not copying missing file { k }')
 
-
-
     """
     Find the timestamp of the most recently updated file in a rcf
     """
+
     def _get_rcf_timestamp(self, rcf: list, game_id: int) -> int:
         src_dir = self._get_game_root(game_id)
 
@@ -176,12 +185,13 @@ class Plugin:
         full = list(filter(lambda p: os.path.exists(p), paths))
 
         m_times = list(map(lambda f: os.path.getmtime(f), full))
-        max_time = int(round(max(m_times) * 1000)) # we use msecs not secs
+        max_time = int(round(max(m_times) * 1000))  # we use msecs not secs
         return max_time
 
     """
     Create a save file directory save-GAMEID-timestamp and return SaveInfo object
     """
+
     def _create_savedir(self, game_id: int, is_undo: bool = False) -> dict:
 
         ts = int(round(time.time() * 1000))  # msecs since 1970
@@ -192,12 +202,13 @@ class Plugin:
         path = self._saveinfo_to_dir(i)
         logger.debug(f'Creating savedir {path}')
         if not self.dry_run:
-            os.makedirs(path, exist_ok = True)
+            os.makedirs(path, exist_ok=True)
         return i
 
     """
     Parse a filename and return a saveinfo dict.  
     """
+
     def _file_to_saveinfo(self, filename: str) -> dict:
         l = filename.split("_")
         i = {
@@ -205,7 +216,7 @@ class Plugin:
             "game_id": int(l[1]),
             "timestamp": int(l[2]),
             "filename": filename
-            }
+        }
         # logger.debug(f'Parsed filename {i}')
         return i
 
@@ -223,14 +234,16 @@ class Plugin:
                 todel = files.pop()
                 logger.info(f'Culling { todel }')
                 if not self.dry_run:
-                    shutil.rmtree(os.path.join(self._get_savesdir(), todel["filename"]))
-        
+                    shutil.rmtree(os.path.join(
+                        self._get_savesdir(), todel["filename"]))
+
         delete_oldest(undos, 1)
         delete_oldest(saves, 10)
 
     """
     Given a save_info return a full pathname to that directory
     """
+
     def _saveinfo_to_dir(self, save_info: dict) -> str:
         d = self._get_savesdir()
         return os.path.join(d, save_info["filename"])
@@ -260,25 +273,27 @@ class Plugin:
             logger.warn('self is not an instance, fixing')
             self = pinstance
 
-        game_id = int(game_id) # force int type, javascript comes across as strs
+        # force int type, javascript comes across as strs
+        game_id = int(game_id)
         gameDir = self._get_game_root(game_id)
         logger.info(f'got gamedir { gameDir }')
         rcf = self._read_rcf(game_id)
 
         if not rcf:
             return None
-        
+
         newest_save = await self._get_newest_save(game_id)
         if newest_save and self.ignore_unchanged:
             game_timestamp = self._get_rcf_timestamp(rcf, game_id)
             if newest_save["timestamp"] > game_timestamp:
-                logger.warn(f'Skipping backup for { game_id } - no changed files')
+                logger.warn(
+                    f'Skipping backup for { game_id } - no changed files')
                 return None
 
         saveInfo = self._create_savedir(game_id)
         self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(saveInfo))
 
-        await self._cull_old_saves() 
+        await self._cull_old_saves()
         return saveInfo
 
     """
@@ -290,7 +305,7 @@ class Plugin:
         rcf = self._read_rcf(game_id)
         assert rcf
         gameDir = self._get_game_root(game_id)
-        
+
         # first make the backup (unless restoring from an undo already)
         if not save_info["is_undo"]:
             logger.info('Generating undo files')
@@ -301,7 +316,8 @@ class Plugin:
         logger.info(f'Attempting restore of { save_info }')
         self._copy_by_rcf(rcf, self._saveinfo_to_dir(save_info), gameDir)
 
-        await self._cull_old_saves() # we now might have too many undos, so possibly delete one
+        # we now might have too many undos, so possibly delete one
+        await self._cull_old_saves()
 
     """
     Given a list of steam game-ids, return a list of game-ids which are supported for backups
@@ -323,7 +339,7 @@ class Plugin:
         infos = list(map(lambda f: self._file_to_saveinfo(f), files))
 
         # Sort by timestamp, newest first
-        infos.sort(key = lambda i: i["timestamp"], reverse = True)
+        infos.sort(key=lambda i: i["timestamp"], reverse=True)
 
         # put undos first
         undos = list(filter(lambda i: i["is_undo"], infos))
@@ -334,10 +350,11 @@ class Plugin:
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self):
         logger.info("Steamback running!")
-    
+
     # Function called first during the unload process, utilize this to handle your plugin being removed
     async def _unload(self):
         logger.info("Steamback exiting!")
+
 
 """
     This seems busted for me so leaving off for now... -geeksville
