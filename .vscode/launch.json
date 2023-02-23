@@ -10,6 +10,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/pytest/simloader.py",
             "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/pytest",
+            "args": [
+            ],
             "justMyCode": true
         }
     ]

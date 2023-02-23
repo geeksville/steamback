@@ -28,13 +28,47 @@ declare namespace appStore {
   function GetAppOverviewByGameID(appId: number): AppOverview
 }
 
+/**
+ * Used to provide context to do_backup
+ */
+interface GameInfo {
+  game_id: number
+  install_root: string // where the files are installed.  Normally from SteamClient.InstallFolder.GetInstallFolders()
+  save_games_root: string // only populated by python, optional when generated in javascript
+}
+
+/**
+ * A result object from do_backup or get_saveinfos
+ */
 interface SaveInfo {
-  game_id: number;
-  timestamp: number;
-  filename: string;
+  game_info: GameInfo
+  timestamp: number
+  filename: string
   is_undo: boolean
 }
 
+
+
+
+/**
+ * Generate a game_info object (which includes install_root) for the given game_id, or throw if not found
+ * @param game_id 
+ * @returns 
+ */
+async function makeGameInfo(game_id: number): Promise<GameInfo> {
+  const folders = await SteamClient.InstallFolder.GetInstallFolders()
+  for (let f of folders) {
+    const appIds = new Set<number>(f.vecApps.map(a => a.nAppId))
+    if(appIds.has(game_id)) {
+      const info: GameInfo = {
+        game_id: game_id,
+        install_root: f.strFolderPath
+      }
+      return info
+    }
+  }
+  throw new Error(`game_info not found for ${ game_id }`)
+}
 
 const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([]);
@@ -46,15 +80,20 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   // Find which games we can work on
   async function getSupported() {
     const folders = await SteamClient.InstallFolder.GetInstallFolders()
-    let appIds: number[] = []
+    let gameInfos: GameInfo[] = []
     for (let f of folders) {
       for (let a of f.vecApps) {
-        appIds = appIds.concat(a.nAppID)
+        const info: GameInfo = {
+          game_id: a.nAppID,
+          install_root: f.strFolderPath
+        }
+        gameInfos.concat(info)
       }
     }
+
     // console.log("installed apps", appIds)
     const r = await serverAPI.callPluginMethod("find_supported", {
-      game_ids: appIds
+      game_infos: gameInfos
     })
 
     // console.log("steamback supported", r.result)
@@ -168,13 +207,17 @@ export default definePlugin((serverApi: ServerAPI) => {
 
   TimeAgo.addDefaultLocale(en)
 
-  const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications((n: LifetimeNotification) => {
+  const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications(async (n: LifetimeNotification) => {
     // console.log("Steamback AppLifetimeNotification", n);
 
     if (!n.bRunning) {
-      serverApi.callPluginMethod("do_backup", {
-        game_id: n.unAppID
-      }).then((r) => {
+      try {
+        const gameInfo: GameInfo = await makeGameInfo(n.unAppID)
+        console.log("Steamback backup game: ", gameInfo)
+        const r = await serverApi.callPluginMethod("do_backup", {
+          game_info: gameInfo
+        })
+ 
         const saveinfo = r.result as SaveInfo
         console.log("steamback backup results", saveinfo)
         if (saveinfo)
@@ -183,12 +226,13 @@ export default definePlugin((serverApi: ServerAPI) => {
             body: `${appStore.GetAppOverviewByGameID(saveinfo.game_id).display_name} snapshot taken`,
             icon: <FiDownload />,
           });
-      }).catch(error =>
+      }
+      catch (error: any) {
         console.error('Steamback backup', error)
-      )
+      }
     }
   })
-
+        
   let sid = new SteamID(App.m_CurrentUser.strSteamID);
 
   serverApi.callPluginMethod("set_account_id", {

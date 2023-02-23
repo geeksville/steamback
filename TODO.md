@@ -6,6 +6,12 @@ react-devtools --no-sandbox
 
 ## JS todo
 
+fix game infos
+        # force int type, javascript comes across as strs
+        # game_id = int(game_id)
+		
+complete change to game_info
+cache game infos in python settings
 
 * add an icon for the plugin
 
