@@ -14,6 +14,8 @@ Deckshot waits for games to exit.  When a (supported) game exits it automaticall
 
 ## How to rewind to a snapshot
 
+![Deckshot settings](docs/../doc/confirm.jpeg)
+
 To rewind to a save-game:
 
 * Exit any running games (you can not rewind to an old save-game while that game is running)
