@@ -86,9 +86,11 @@ class Plugin:
     """
 
     def _find_autoclouds(self, game_info, is_linux_game: bool) -> list[str]:
+        assert game_info["install_root"]
         steamApps = os.path.join(game_info["install_root"], "steamapps")
 
         if is_linux_game:
+            assert game_info["game_name"]
             rootdir = os.path.join(steamApps, "common", game_info["game_name"])
         else:
             rootdir = os.path.join(
@@ -97,17 +99,51 @@ class Plugin:
         p = Path(rootdir)
         files = p.rglob("steam_autocloud.vdf")
         # we want the directories that contained the autocloud
-        dirs = list(map(lambda f: f.parent, files))
+        dirs = list(map(lambda f: str(f.parent), files))
 
         logger.debug(f'Autoclouds in { rootdir } are { dirs }')
-        return None
+        return dirs
 
     """
     Try to figure out where this game stores its save files. return that path or None
     """
 
-    def _find_save_root_from_autoclouds(self, game_info, rcf, autoclouds: list) -> str:
-        return None
+    def _find_save_root_from_autoclouds(self, game_info, rcf, autocloud: str) -> str:
+
+        if len(rcf) < 1:
+            return None     # No backup files in the rcf, we can't even do the scan
+
+        # Find any common prefix (which is a directory path) that is shared by all entries in the rcf filenames
+        prevR = rcf[0]
+        firstDifference = len(prevR)
+        for r in rcf:
+            # find index of first differing char (or None if no differences)
+            index = next(
+                (i for i in range(min(len(prevR), len(r))) if prevR[i] != r[i]), None)
+
+            if index is not None and firstDifference > index:
+                firstDifference = index
+
+            prevR = r
+
+        # common prefix for all files in rdf (could be empty if files were all backed up from autocloud dir)
+        rPrefix = prevR[:firstDifference]
+
+        # at this point rPrefix is _probably_ a directory like "SNAppData/SavedGames/" but it also could be
+        # "SNAppData/SavedGames/commonPrefix" (in the case where all the backup files started with commonPrefix)
+        # therefore scan backwards from end of string to find first / and then we KNOW everything left of that
+        # is a directory.  If we don't find such a slash, that means none of the backup files are using directories
+        # and we should just use the existing autocloud dir.
+        dirSplit = rPrefix.rfind('/') # FIXME what about paths where someone used / in the filename!
+        if dirSplit != -1:
+            rPrefix = rPrefix[:dirSplit] # throw away everything after the last slash (and the slash itself)
+
+            # check the last n characters of autocloud and if they match our prefix, strip them to find the new root
+            autoTail = autocloud[-len(rPrefix):] 
+            if autoTail == rPrefix:
+                autocloud = autocloud[:-len(rPrefix)]
+
+        return autocloud
 
     """
     Try to figure out where this game stores its save files. return that path or None
@@ -130,7 +166,7 @@ class Plugin:
         if not autoclouds:
             autoclouds = self._find_autoclouds(game_info, is_linux_game=False)
 
-        if len(autoclouds) == 0:
+        if not autoclouds or len(autoclouds) == 0:
             logger.warn(f'No autocloud found for { game_info }, can\'t backup')
             return None
 
@@ -140,7 +176,7 @@ class Plugin:
                 f'Multiple autoclouds found for { game_info }, can\'t backup')
             return None
 
-        return self._find_save_root_from_autoclouds(game_info, rcf, autoclouds)
+        return self._find_save_root_from_autoclouds(game_info, rcf, autoclouds[0])
 
     """
     Read the rcf file for the specified game, or if not found return None
