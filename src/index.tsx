@@ -13,7 +13,7 @@ import {
   AppOverview,
   Router
 } from "decky-frontend-lib";
-import { VFC, useState, useRef, useEffect } from "react";
+import { VFC, useState, useEffect } from "react";
 import { FiDownload, FiUpload } from "react-icons/fi";
 import SteamID from "steamid";
 import TimeAgo from "javascript-time-ago"
