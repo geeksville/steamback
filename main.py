@@ -1,4 +1,10 @@
-import re, json, time, os, shutil, logging
+import re
+import json
+import time
+import os
+import shutil
+import logging
+from pathlib import Path
 
 # The decky plugin module is located at decky-loader/plugin
 # For easy intellisense checkout the decky-loader code one directory up
@@ -76,24 +82,75 @@ class Plugin:
         return os.path.join(r, str(self.account_id), str(game_id))
 
     """
+    Find all directories that contain steam_autocloud.vdf files or None
+    """
+
+    def _find_autoclouds(self, game_info, is_linux_game: bool) -> list[str]:
+        steamApps = os.path.join(game_info["install_root"], "steamapps")
+
+        if is_linux_game:
+            rootdir = os.path.join(steamApps, "common", game_info["game_name"])
+        else:
+            rootdir = os.path.join(
+                steamApps, f'compatdata/{ game_info["game_id" ] }/pfx/drive_c/users/steamuser')
+
+        p = Path(rootdir)
+        files = p.rglob("steam_autocloud.vdf")
+        # we want the directories that contained the autocloud
+        dirs = list(map(lambda f: f.parent, files))
+
+        logger.debug(f'Autoclouds in { rootdir } are { dirs }')
+        return None
+
+    """
+    Try to figure out where this game stores its save files. return that path or None
+    """
+
+    def _find_save_root_from_autoclouds(self, game_info, rcf, autoclouds: list) -> str:
+        return None
+
+    """
+    Try to figure out where this game stores its save files. return that path or None
+    """
+
+    def _find_save_games(self, game_info, rcf: list[str]) -> str:
+        d = self._get_gamedir(game_info["game_id"])
+
+        # First check to see if the game uses the 'new' "remote" directory approach to save files (i.e. they used the steam backup API from the app)
+        remoteSaveGames = os.path.join(d, "remote")
+        if os.path.isdir(remoteSaveGames):
+            # Store the savegames directory for this game
+            return remoteSaveGames
+
+        # Alas, now we need to scan the install dir to look for steam_autocloud.vdf files.  If found that means the dev is doing the 'lazy'
+        # way of just saying "backup all files due to some path we enter in our web admin console".
+
+        # FIXME, cache this expensive result
+        autoclouds = self._find_autoclouds(game_info, is_linux_game=True)
+        if not autoclouds:
+            autoclouds = self._find_autoclouds(game_info, is_linux_game=False)
+
+        if len(autoclouds) == 0:
+            logger.warn(f'No autocloud found for { game_info }, can\'t backup')
+            return None
+
+        # We currently (but could someday?) don't support multiple autocloud directories
+        if len(autoclouds) > 1:
+            logger.warn(
+                f'Multiple autoclouds found for { game_info }, can\'t backup')
+            return None
+
+        return self._find_save_root_from_autoclouds(game_info, rcf, autoclouds)
+
+    """
     Read the rcf file for the specified game, or if not found return None
     """
 
-    def _read_rcf(self, game_info: dict) -> list:
+    def _read_rcf(self, game_info: dict) -> list[str]:
         d = self._get_gamedir(game_info["game_id"])
         path = os.path.join(d, "remotecache.vdf")
 
-        # If we haven't already found where the savegames for this app live, do so now (or fail if not findable)
-        if not "save_games_root" in game_info:
-            remoteSaveGames = os.path.join(d, "remote")
-            if not os.path.isdir(remoteSaveGames):
-                # We currently only understand games that have their saves in teh 'remote' subdir
-                logger.warn(f'Unable to backup { game_info }: not yet supported')
-                return None
-            else:
-                # Store the savegames directory for this game
-                game_info["save_games_root"] = remoteSaveGames
-
+        rcf = []
         if os.path.isfile(path):
             logger.debug(f'Read rcf {path}')
             with open(path) as f:
@@ -105,7 +162,7 @@ class Plugin:
                 lines = lines[2:]
                 # We look for lines containing quotes and immediately preceeding lines with just an open brace
                 prevl = None
-                r = []
+
                 skipping = False
                 for l in lines:
                     s = l.strip()
@@ -116,19 +173,29 @@ class Plugin:
                         if prevl:
                             # prevl will have quote chars as first and last of string.  Remove them
                             filename = (prevl[1:])[:-1]
-                            r.append(filename)
+                            rcf.append(filename)
                             prevl = None
 
                         # Now skip until we get a close brace
                         skipping = True
                     else:
                         prevl = s
-
-                # logger.debug(f'rcf files are {r}')
-                return r
         else:
             logger.debug(f'No rcf {path}')
             return None
+
+        # If we haven't already found where the savegames for this app live, do so now (or fail if not findable)
+        if not "save_games_root" in game_info:
+            saveRoot = self._find_save_games(game_info, rcf)
+            if not saveRoot:
+                logger.warn(
+                    f'Unable to backup { game_info }: not yet supported')
+                return None
+            else:
+                game_info["save_games_root"] = saveRoot
+
+        # logger.debug(f'rcf files are {r}')
+        return rcf
 
     """Get the root directory this game uses for its save files
     """
@@ -194,8 +261,8 @@ class Plugin:
 
     def _create_savedir(self, game_info: dict, is_undo: bool = False) -> dict:
         game_id = game_info["game_id"]
-        assert game_info["save_games_root"] # This better be populated by now!
-        ts = int(round(time.time() * 1000)) # msecs since 1970
+        assert game_info["save_games_root"]  # This better be populated by now!
+        ts = int(round(time.time() * 1000))  # msecs since 1970
 
         si = {
             "game_info": game_info,
@@ -272,7 +339,7 @@ class Plugin:
     """
     async def do_backup(self, game_info: dict) -> dict:
         self = fixself(self)
-        
+
         logger.info(f'Attempting backup of { game_info }')
         rcf = self._read_rcf(game_info)
 

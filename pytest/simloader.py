@@ -10,11 +10,12 @@ from main import *
 """
 
 
-def make_game_info(game_id: int) -> dict:
+def make_game_info(game_id: int, name: str = None) -> dict:
     info = {
         # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
         "install_root": "/home/kevinh/.steam/debian-installation/",
-        "game_id": game_id
+        "game_id": game_id,
+        "game_name": name
     }
     return info
 
@@ -26,16 +27,21 @@ async def main():
     # print(f'Initial saveinfos { await p.get_saveinfos() }')
     p.ignore_unchanged = False  # Force backup for testing
 
-    # si = await p.do_backup(make_game_info(264710))
-    #print(f'Subnautica backup results: { si }')
-    #assert si is not None
+    valheim = make_game_info(892970, "Valheim")
+    subnautica = make_game_info(264710, "Subnautica")
 
-    si = await p.do_backup(make_game_info(892970))
+    si = await p.do_backup(subnautica)
+    print(f'Subnautica backup results: { si }')
+    assert si is not None
+
+    return
+
+    si = await p.do_backup(valheim)
     print(f'Valheim backup results: { si }')
     assert si is not None
 
     p.ignore_unchanged = True  # following backup should be skipped because no changes
-    si = await p.do_backup(make_game_info(892970))
+    si = await p.do_backup(valheim)
     assert si is None
 
     # Test a game that should not exist
@@ -45,6 +51,11 @@ async def main():
     # Test a game with unsupported vdf (raft)
     si = await p.do_backup(make_game_info(648800))
     assert si is None
+
+    # Test find_supported
+    candidates = [valheim, subnautica]
+    supported = await p.find_supported(candidates)
+    assert supported == candidates
 
     infos = await p.get_saveinfos()
     saves = list(filter(lambda i: not i["is_undo"], infos))
