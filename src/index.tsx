@@ -36,7 +36,7 @@ interface SaveInfo {
 }
 
 
-const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
+const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([]);
   const [supportedGameIds, setSupportedGameIds] = useState<number[]>([]);
 
@@ -57,7 +57,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       game_ids: appIds
     })
 
-    // console.log("deckshot supported", r.result)
+    // console.log("steamback supported", r.result)
     setSupportedGameIds(r.result as number[])
   }
 
@@ -65,10 +65,10 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     getSupported()
 
     serverAPI.callPluginMethod("get_saveinfos", {}).then(saveinfo => {
-      // console.log("deckshot saveinfos", saveinfo.result)
+      // console.log("steamback saveinfos", saveinfo.result)
       setSaveInfos(saveinfo.result as SaveInfo[])
     }).catch(e => {
-      console.error("deckshot saveinfos failed", e)
+      console.error("steamback saveinfos failed", e)
     })
   }, []) // extra [] at end means only run for first render
 
@@ -89,12 +89,12 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
               save_info: si
             }).then(() => {
               serverAPI.toaster.toast({
-                title: 'Deckshot',
+                title: 'Steamback',
                 body: `Reverted ${appDetails.display_name} from snapshot`,
                 icon: <FiUpload />,
               });
             }).catch(error =>
-              console.error('Deckshot restore', error)
+              console.error('Steamback restore', error)
             )
           }
 
@@ -129,7 +129,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     </PanelSection>
 
   const supportedHtml = supportedGameIds.length < 1 ?
-    <span style={{ padding: '1rem', display: 'block' }}>Unfortunately, none of the currently installed games are supported.  Please check for new deckshot versions occasionally...</span> :
+    <span style={{ padding: '1rem', display: 'block' }}>Unfortunately, none of the currently installed games are supported.  Please check for new steamback versions occasionally...</span> :
     <ul style={{ listStyleType: 'none', padding: '1rem' }}>
       {
         supportedGameIds.map(id => {
@@ -143,7 +143,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       }
     </ul>
 
-  const helpUrl = "https://github.com/geeksville/deckshot/blob/main/README.md"
+  const helpUrl = "https://github.com/geeksville/steamback/blob/main/README.md"
   return (
     <div>
       <span style={{ padding: '1rem', display: 'block' }}><a href={helpUrl} onClick={async () => {
@@ -151,7 +151,7 @@ const DeckshotContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
         Navigation.NavigateToExternalWeb(
           `${helpUrl}`
         )
-      }}>Deckshot</a> automatically takes save-game snapshots for many Steam games. See our github page for more information.</span>
+      }}>Steamback</a> automatically takes save-game snapshots for many Steam games. See our github page for more information.</span>
 
       {snapshotHtml}
 
@@ -169,22 +169,22 @@ export default definePlugin((serverApi: ServerAPI) => {
   TimeAgo.addDefaultLocale(en)
 
   const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications((n: LifetimeNotification) => {
-    // console.log("Deckshot AppLifetimeNotification", n);
+    // console.log("Steamback AppLifetimeNotification", n);
 
     if (!n.bRunning) {
       serverApi.callPluginMethod("do_backup", {
         game_id: n.unAppID
       }).then((r) => {
         const saveinfo = r.result as SaveInfo
-        console.log("deckshot backup results", saveinfo)
+        console.log("steamback backup results", saveinfo)
         if (saveinfo)
           serverApi.toaster.toast({
-            title: 'Deckshot',
+            title: 'Steamback',
             body: `${appStore.GetAppOverviewByGameID(saveinfo.game_id).display_name} snapshot taken`,
             icon: <FiDownload />,
           });
       }).catch(error =>
-        console.error('Deckshot backup', error)
+        console.error('Steamback backup', error)
       )
     }
   })
@@ -194,12 +194,12 @@ export default definePlugin((serverApi: ServerAPI) => {
   serverApi.callPluginMethod("set_account_id", {
     id_num: sid.accountid
   }).catch(e =>
-      console.error("Can't set deckshot account", e)
+      console.error("Can't set steamback account", e)
     )
 
   return {
-    title: <div className={staticClasses.Title}>Deckshot</div>,
-    content: <DeckshotContent serverAPI={serverApi} />,
+    title: <div className={staticClasses.Title}>Steamback</div>,
+    content: <SteambackContent serverAPI={serverApi} />,
     icon: <FiDownload />,
     onDismount() {
       taskHook!.unregister();

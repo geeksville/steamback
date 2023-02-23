@@ -4,8 +4,8 @@ import os
 import time
 import re
 
-logging.basicConfig(filename="/tmp/deckshot.log",
-                    format='[Deckshot] %(asctime)s %(levelname)s %(message)s',
+logging.basicConfig(filename="/tmp/steamback.log",
+                    format='[Steamback] %(asctime)s %(levelname)s %(message)s',
                     filemode='w+',
                     force=True)
 logger=logging.getLogger()
@@ -58,7 +58,7 @@ class Plugin:
     """
     def _get_savesdir(self) -> str:
         # We want to allow testing when not running under decky
-        r = os.environ["DECKY_PLUGIN_RUNTIME_DIR"] if is_decky else "/tmp/deckshot"
+        r = os.environ["DECKY_PLUGIN_RUNTIME_DIR"] if is_decky else "/tmp/steamback"
     
         p = os.path.join(r, "saves")
         if not os.path.exists(p):
@@ -334,9 +334,9 @@ class Plugin:
 
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self):
-        logger.info("Deckshot running!")
+        logger.info("Steamback running!")
     
     # Function called first during the unload process, utilize this to handle your plugin being removed
     async def _unload(self):
-        logger.info("Deckshot exiting!")
+        logger.info("Steamback exiting!")
 

@@ -1,5 +1,5 @@
 {
-  "name": "deckshot",
+  "name": "steamback",
   "version": "0.0.1",
   "description": "Automatic savegame snapshots for Steam",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/geeksville/deckshot.git"
+    "url": "git+https://github.com/geeksville/steamback.git"
   },
   "keywords": [
     "decky",
@@ -21,9 +21,9 @@
   "author": "Kevin Hester <kevinh@geeksville.com",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/geeksville/deckshot/issues"
+    "url": "https://github.com/geeksville/steamback/issues"
   },
-  "homepage": "https://github.com/geeksville/deckshot#readme",
+  "homepage": "https://github.com/geeksville/steamback#readme",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.1.0",
     "@rollup/plugin-json": "^4.1.0",
