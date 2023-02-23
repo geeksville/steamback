@@ -33,9 +33,9 @@ declare namespace appStore {
  */
 interface GameInfo {
   game_id: number
-  game_name: string, // The display name for this game (required by python install directory search)
+  game_name: string // The display name for this game (required by python install directory search)
   install_root: string // where the files are installed.  Normally from SteamClient.InstallFolder.GetInstallFolders()
-  save_games_root: string // only populated by python, optional when generated in javascript
+  save_games_root?: string // only populated by python, optional when generated in javascript
 }
 
 /**
@@ -48,9 +48,6 @@ interface SaveInfo {
   is_undo: boolean
 }
 
-
-
-
 /**
  * Generate a game_info object (which includes install_root) for the given game_id, or throw if not found
  * @param game_id 
@@ -59,10 +56,12 @@ interface SaveInfo {
 async function makeGameInfo(game_id: number): Promise<GameInfo> {
   const folders = await SteamClient.InstallFolder.GetInstallFolders()
   for (let f of folders) {
-    const appIds = new Set<number>(f.vecApps.map(a => a.nAppId))
+    const appIds = new Set<number>(f.vecApps.map(a => a.nAppID))
+    // console.log("appset vs ", f.vecApps, appIds, game_id)
     if(appIds.has(game_id)) {
       const info: GameInfo = {
         game_id: game_id,
+        game_name: appStore.GetAppOverviewByGameID(game_id).display_name,
         install_root: f.strFolderPath
       }
       return info
@@ -73,7 +72,7 @@ async function makeGameInfo(game_id: number): Promise<GameInfo> {
 
 const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([]);
-  const [supportedGameIds, setSupportedGameIds] = useState<number[]>([]);
+  const [supportedGameInfos, setSupportedGameInfos] = useState<GameInfo[]>([]);
 
   // Create formatter (English).
   const timeAgo = new TimeAgo('en-US')
@@ -86,19 +85,20 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       for (let a of f.vecApps) {
         const info: GameInfo = {
           game_id: a.nAppID,
+          game_name: appStore.GetAppOverviewByGameID(a.nAppID).display_name,
           install_root: f.strFolderPath
         }
-        gameInfos.concat(info)
+        gameInfos = gameInfos.concat(info)
       }
     }
 
-    // console.log("installed apps", appIds)
+    //console.log("installed apps", gameInfos)
     const r = await serverAPI.callPluginMethod("find_supported", {
       game_infos: gameInfos
     })
 
-    // console.log("steamback supported", r.result)
-    setSupportedGameIds(r.result as number[])
+    //console.log("steamback supported", r.result)
+    setSupportedGameInfos(r.result as GameInfo[])
   }
 
   useEffect(() => {
@@ -121,7 +121,6 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
         saveInfos.map(si => {
           // console.log('showing saveinfo ', si);
 
-          const appDetails = appStore.GetAppOverviewByGameID(si.game_id)
           const agoStr = timeAgo.format(new Date(si.timestamp))
 
           const doRestore = () => {
@@ -130,7 +129,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
             }).then(() => {
               serverAPI.toaster.toast({
                 title: 'Steamback',
-                body: `Reverted ${appDetails.display_name} from snapshot`,
+                body: `Reverted ${ si.game_info.game_name } from snapshot`,
                 icon: <FiUpload />,
               });
             }).catch(error =>
@@ -142,8 +141,8 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           const askRestore = () => {
             const title = si.is_undo ? "Revert recent snapshot" : "Revert to snapshot"
             const message = si.is_undo ?
-              `Are you sure you want to undo your changes to ${appDetails.display_name}?` :
-              `Are you sure you want to revert ${appDetails.display_name} to the save from ${agoStr}?`
+              `Are you sure you want to undo your changes to ${ si.game_info.game_name }?` :
+              `Are you sure you want to revert ${ si.game_info.game_name } to the save from ${agoStr}?`
 
             showModal(
               <ConfirmModal
@@ -156,10 +155,10 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
 
           const runningApps = new Set(Router.RunningApps.map(a => parseInt(a.appid)))
           // console.log("running apps", runningApps, si.game_id, runningApps.has(si.game_id))
-          const buttonText = si.is_undo ? `Undo ${appDetails.display_name} changes` : `${appDetails.display_name} ${agoStr}`
+          const buttonText = si.is_undo ? `Undo ${si.game_info.game_name} changes` : `${si.game_info.game_name} ${agoStr}`
           return <PanelSectionRow>
             <ButtonItem onClick={askRestore}
-              disabled={runningApps.has(si.game_id)} // Don't let user restore files while game is running
+              disabled={runningApps.has(si.game_info.game_id)} // Don't let user restore files while game is running
               layout="below">
               {buttonText}
             </ButtonItem>
@@ -168,16 +167,15 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       }
     </PanelSection>
 
-  const supportedHtml = supportedGameIds.length < 1 ?
+  const supportedHtml = supportedGameInfos.length < 1 ?
     <span style={{ padding: '1rem', display: 'block' }}>Unfortunately, none of the currently installed games are supported.  Please check for new steamback versions occasionally...</span> :
     <ul style={{ listStyleType: 'none', padding: '1rem' }}>
       {
-        supportedGameIds.map(id => {
-          // console.log('showing supported ', id)
-          const appDetails = appStore.GetAppOverviewByGameID(id)
+        supportedGameInfos.map(info => {
+          // console.log('showing supported ', info)
 
           return <li style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', paddingBottom: '10px', width: '100%', justifyContent: 'space-between' }}>
-            <span>{appDetails.display_name}</span>
+            <span>{ info.game_name }</span>
           </li>
         })
       }
@@ -224,7 +222,7 @@ export default definePlugin((serverApi: ServerAPI) => {
         if (saveinfo)
           serverApi.toaster.toast({
             title: 'Steamback',
-            body: `${appStore.GetAppOverviewByGameID(saveinfo.game_id).display_name} snapshot taken`,
+            body: `${ gameInfo.game_name } snapshot taken`,
             icon: <FiDownload />,
           });
       }
