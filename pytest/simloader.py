@@ -37,10 +37,6 @@ async def main():
     # Use less /home/kevinh/.steam/debian-installation/steamapps/appmanifest_848450.acf to find "installdir" property
     # /home/kevinh/.steam/debian-installation/steamapps/common/SubnauticaZero/SNAppData/SavedGames/
 
-    # FIXME - require one matching rcf file to exist to declare game backupable (to confirm our paths are good)
-    # FIXME - compare appmanifest for windows game also.
-    # If there is no valve_autocloud.vdf we should still allow backups, but assume the root directory matches "installdir"
-
     si = await p.do_backup(timberborn)
     print(f'timberborn backup results: { si }')
     assert si is not None

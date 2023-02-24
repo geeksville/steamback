@@ -67,7 +67,7 @@ class Plugin:
 
         self.account_id = 0
         self.dry_run = False  # Set to true to suppress 'real' writes to directories
-        # FIXME not yet implemented
+
         # don't generate backups if the files haven't changed since last backup
         self.ignore_unchanged = True
 
