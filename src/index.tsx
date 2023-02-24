@@ -56,8 +56,8 @@ interface SaveInfo {
 async function makeGameInfo(game_id: number): Promise<GameInfo> {
   const folders = await SteamClient.InstallFolder.GetInstallFolders()
   for (let f of folders) {
-    const appIds = new Set<number>(f.vecApps.map(a => a.nAppID))
-    // console.log("appset vs ", f.vecApps, appIds, game_id)
+    const appIds = new Set<number>(f.vecApps.map((a: any) => a.nAppID))
+    // console.log("app set vs ", f.vecApps, appIds, game_id)
     if(appIds.has(game_id)) {
       const info: GameInfo = {
         game_id: game_id,
