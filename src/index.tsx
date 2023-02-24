@@ -97,8 +97,10 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       game_infos: gameInfos
     })
 
+    let supported = r.result as GameInfo[]
     //console.log("steamback supported", r.result)
-    setSupportedGameInfos(r.result as GameInfo[])
+    supported.sort((a, b) => a.game_name.localeCompare(b.game_name)) // sort by name
+    setSupportedGameInfos(supported)
   }
 
   useEffect(() => {
