@@ -3,7 +3,8 @@ import json
 import time
 import os
 import shutil
-import logging, re
+import logging
+import re
 from pathlib import Path
 
 # The decky plugin module is located at decky-loader/plugin
@@ -24,6 +25,7 @@ pinstance = None
 
 """Work around for busted decky creation"""
 
+
 def fixself(self) -> object:
     global pinstance
 
@@ -34,11 +36,13 @@ def fixself(self) -> object:
         self = pinstance
     return self
 
+
 """Try to parse a valve vdf file.  Looking for an entry with the specified key.
 If found return the value that goes with that key, else return None.
 
 (Used to parse appmanifest_GAMEID.acf files finding "installdir")
 """
+
 
 def _parse_vcf(path: str, key: str) -> str:
     kvMatch = re.compile('\s*"(.+)"\s+"(.+)"\s*')
@@ -49,6 +53,7 @@ def _parse_vcf(path: str, key: str) -> str:
             if m and m.group(1) == key:
                 return m.group(2)
     return None
+
 
 class Plugin:
     def __init__(self):
@@ -105,9 +110,11 @@ class Plugin:
 
     """read installdir from appmanifest_gameid.vdf and return it (or None if not found)
     """
+
     def _parse_appmanifest(self, game_info: dict) -> str:
         appdir = self._get_steamapps_dir(game_info)
-        installdir = _parse_vcf(os.path.join(appdir, f'appmanifest_{ game_info["game_id"] }.acf'), "installdir")
+        installdir = _parse_vcf(os.path.join(
+            appdir, f'appmanifest_{ game_info["game_id"] }.acf'), "installdir")
         return installdir
 
     """
@@ -185,6 +192,24 @@ class Plugin:
         return autocloud
 
     """
+    Look in the likely locations for savegame files (per the rcf list). return that path or None
+    """
+
+    def _search_likely_locations(self, game_info: dict, rcf: list[str]) -> str:
+        # try relative to the linux root
+        d = self._get_game_saves_root(game_info, is_linux_game=True)
+        if self._rcf_is_valid(d, rcf):
+            return d
+
+        # try relative to Documents on windows
+        d = self._get_game_saves_root(game_info, is_linux_game=False)
+        d = os.path.join(d, 'Documents')
+        if self._rcf_is_valid(d, rcf):
+            return d
+
+        return None
+
+    """
     Try to figure out where this game stores its save files. return that path or None
     """
 
@@ -207,16 +232,11 @@ class Plugin:
         if not autoclouds:
             autoclouds = self._find_autoclouds(game_info, is_linux_game=False)
 
-        if not autoclouds or len(autoclouds) == 0:
-            logger.warn(f'No autocloud found for { game_info } looking in linux app data')
-            d = self._get_game_saves_root(game_info, is_linux_game = True)
-            return d
-
-        # If multiple autocloud files are found, just search in the root and see if that works
-        if len(autoclouds) > 1:
+        # If no/multiple autocloud files are found, just search in the root and see if that works
+        if not autoclouds or len(autoclouds) == 0 or len(autoclouds) > 1:
             logger.warn(
-                f'Multiple autocloud found for { game_info } looking in linux app data')
-            d = self._get_game_saves_root(game_info, is_linux_game=True)
+                f'Ambiguous autoclouds { game_info } looking for last resort')
+            d = self._search_likely_locations(game_info, rcf)
             return d
 
         return self._find_save_root_from_autoclouds(game_info, rcf, autoclouds[0])
@@ -225,10 +245,10 @@ class Plugin:
     confirm that at least one savegame exists, to validate our assumptions about where they are being stored
     if no savegame found claim we can't back this app up.
     """
-    def _rcf_is_valid(self, game_info: dict, rcf: list[str]):
-        rootdir = game_info["save_games_root"]
+
+    def _rcf_is_valid(self, root_dir: str, rcf: list[str]):
         for f in rcf:
-            if os.path.isfile(os.path.join(rootdir, f)):
+            if os.path.isfile(os.path.join(root_dir, f)):
                 return True
         return False
 
@@ -286,7 +306,7 @@ class Plugin:
 
         # confirm that at least one savegame exists, to validate our assumptions about where they are being stored
         # if no savegame found claim we can't back this app up.
-        if not self._rcf_is_valid(game_info, rcf):
+        if not self._rcf_is_valid(game_info["save_games_root"], rcf):
             logger.warn(
                 f'RCF seems invalid, not backing up { game_info }')
             return None
@@ -321,20 +341,24 @@ class Plugin:
     """
 
     def _copy_by_rcf(self, rcf: list, src_dir: str, dest_dir: str):
-        logger.debug(f'Copying from { src_dir } to { dest_dir }')
+        numCopied = 0
         for k in rcf:
             spath = os.path.join(src_dir, k)
 
             # if the filename contains directories - create them
             if os.path.exists(spath):
+                numCopied = numCopied + 1
                 dpath = os.path.join(dest_dir, k)
-                logger.debug(f'Copying file { k }')
+                # logger.debug(f'Copying file { k }')
                 if not self.dry_run:
                     dir = os.path.dirname(dpath)
                     os.makedirs(dir, exist_ok=True)
                     shutil.copy2(spath, dpath)
             else:
-                logger.warn(f'Not copying missing file { k }')
+                # logger.warn(f'Not copying missing file { k }')
+                pass
+        logger.debug(
+            f'Copied { numCopied } files from { src_dir } to { dest_dir }')
 
     """
     Find the timestamp of the most recently updated file in a rcf
@@ -369,7 +393,7 @@ class Plugin:
         }
 
         path = self._saveinfo_to_dir(si)
-        logger.debug(f'Creating savedir {path}, {si}')
+        # logger.debug(f'Creating savedir {path}, {si}')
         if not self.dry_run:
             os.makedirs(path, exist_ok=True)
             with open(path + ".json", 'w') as fp:
@@ -465,7 +489,7 @@ class Plugin:
         saveInfo = self._create_savedir(game_info)
         try:
             gameDir = self._get_game_root(game_info)
-            logger.info(f'got gamedir { gameDir }')
+            # logger.info(f'got gamedir { gameDir }')
             self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(saveInfo))
         except:
             # Don't keep old directory/json around if we encounter an exception

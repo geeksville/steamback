@@ -30,7 +30,9 @@ async def main():
     valheim = make_game_info(892970, "Valheim")
     subnautica = make_game_info(264710, "Subnautica")
     subnauticabz = make_game_info(848450, "Subnautica Below Zero")
-    mindustry = make_game_info(1127400, None)
+    mindustry = make_game_info(1127400)
+    # shapez = make_game_info(1318690)
+    timberborn = make_game_info(1062090)
 
     # Use less /home/kevinh/.steam/debian-installation/steamapps/appmanifest_848450.acf to find "installdir" property
     # /home/kevinh/.steam/debian-installation/steamapps/common/SubnauticaZero/SNAppData/SavedGames/
@@ -38,6 +40,15 @@ async def main():
     # FIXME - require one matching rcf file to exist to declare game backupable (to confirm our paths are good)
     # FIXME - compare appmanifest for windows game also.
     # If there is no valve_autocloud.vdf we should still allow backups, but assume the root directory matches "installdir"
+
+    si = await p.do_backup(timberborn)
+    print(f'timberborn backup results: { si }')
+    assert si is not None
+
+    # cloud backups seem broken in general for this app
+    #si = await p.do_backup(shapez)
+    #print(f'shapez backup results: { si }')
+    #assert si is not None
 
     si = await p.do_backup(mindustry)
     print(f'mindustry backup results: { si }')
