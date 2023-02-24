@@ -146,6 +146,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
               `Are you sure you want to undo your changes to ${si.game_info.game_name}?` :
               `Are you sure you want to revert ${si.game_info.game_name} to the save from ${agoStr}?`
 
+            Navigation.CloseSideMenus() // close decky UI (user will see notification when restore completes)
             showModal(
               <ConfirmModal
                 onOK={doRestore}
