@@ -58,7 +58,7 @@ async function makeGameInfo(game_id: number): Promise<GameInfo> {
   for (let f of folders) {
     const appIds = new Set<number>(f.vecApps.map((a: any) => a.nAppID))
     // console.log("app set vs ", f.vecApps, appIds, game_id)
-    if(appIds.has(game_id)) {
+    if (appIds.has(game_id)) {
       const info: GameInfo = {
         game_id: game_id,
         game_name: appStore.GetAppOverviewByGameID(game_id).display_name,
@@ -67,7 +67,7 @@ async function makeGameInfo(game_id: number): Promise<GameInfo> {
       return info
     }
   }
-  throw new Error(`game_info not found for ${ game_id }`)
+  throw new Error(`game_info not found for ${game_id}`)
 }
 
 const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
@@ -131,7 +131,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
             }).then(() => {
               serverAPI.toaster.toast({
                 title: 'Steamback',
-                body: `Reverted ${ si.game_info.game_name } from snapshot`,
+                body: `Reverted ${si.game_info.game_name} from snapshot`,
                 icon: <FiUpload />,
               });
             }).catch(error =>
@@ -143,8 +143,8 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           const askRestore = () => {
             const title = si.is_undo ? "Revert recent snapshot" : "Revert to snapshot"
             const message = si.is_undo ?
-              `Are you sure you want to undo your changes to ${ si.game_info.game_name }?` :
-              `Are you sure you want to revert ${ si.game_info.game_name } to the save from ${agoStr}?`
+              `Are you sure you want to undo your changes to ${si.game_info.game_name}?` :
+              `Are you sure you want to revert ${si.game_info.game_name} to the save from ${agoStr}?`
 
             showModal(
               <ConfirmModal
@@ -157,11 +157,16 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
 
           const runningApps = new Set(Router.RunningApps.map(a => parseInt(a.appid)))
           // console.log("running apps", runningApps, si.game_id, runningApps.has(si.game_id))
-          const buttonText = si.is_undo ? `Undo ${si.game_info.game_name} changes` : `${si.game_info.game_name} ${agoStr}`
+          const buttonText = si.is_undo ? `Undo` : `Revert`
+          const labelText = si.game_info.game_name
+          const descText = si.is_undo ? `Reverts recent Stemback changes` : `Snapshot from ${agoStr}`
+          // bottomSeparator="none" label="some label" layout="below"
           return <PanelSectionRow>
             <ButtonItem onClick={askRestore}
+              icon={<FiUpload />}
               disabled={runningApps.has(si.game_info.game_id)} // Don't let user restore files while game is running
-              layout="below">
+              description={descText}
+              label={labelText}>
               {buttonText}
             </ButtonItem>
           </PanelSectionRow>
@@ -177,7 +182,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           // console.log('showing supported ', info)
 
           return <li style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', paddingBottom: '10px', width: '100%', justifyContent: 'space-between' }}>
-            <span>{ info.game_name }</span>
+            <span>{info.game_name}</span>
           </li>
         })
       }
@@ -218,13 +223,13 @@ export default definePlugin((serverApi: ServerAPI) => {
         const r = await serverApi.callPluginMethod("do_backup", {
           game_info: gameInfo
         })
- 
+
         const saveinfo = r.result as SaveInfo
         console.log("steamback backup results", saveinfo)
         if (saveinfo)
           serverApi.toaster.toast({
             title: 'Steamback',
-            body: `${ gameInfo.game_name } snapshot taken`,
+            body: `${gameInfo.game_name} snapshot taken`,
             icon: <FiDownload />,
           });
       }
@@ -233,14 +238,14 @@ export default definePlugin((serverApi: ServerAPI) => {
       }
     }
   })
-        
+
   let sid = new SteamID(App.m_CurrentUser.strSteamID);
 
   serverApi.callPluginMethod("set_account_id", {
     id_num: sid.accountid
   }).catch(e =>
-      console.error("Can't set steamback account", e)
-    )
+    console.error("Can't set steamback account", e)
+  )
 
   return {
     title: <div className={staticClasses.Title}>Steamback</div>,
