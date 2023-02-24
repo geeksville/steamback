@@ -29,11 +29,9 @@ Steamback will then rewind to that save game.  Also (because this plugin is stil
 
 ## What games are supported?
 
-Not all games are supported. This plugin only supports games that use the steam 'cloud save' API. And the current version of this plugin (it should improve) is limited to games that use a particular variant of that API.  We do this because we try (YMMV) to be very _safe_ wrt. your save games.
+Not all games are supported. This plugin only supports games that use the steam 'cloud save' API.  
 
-The plugin will show what games you have installed that **are** supported.  For the main developer of this plugin it seems that about 25% of his Steam library is supported currently.
-
-We are working on adding support for a broader set of 'cloud backup' games. (We use the Steam cloud backup data to tell us what files we should snapshot)
+The plugin will show what games you have installed that **are** supported.  Most (nearly all?) games marked as 'steam cloud' enabled are supported, but if you see one that isn't please file a github issue.
 
 ![Steamback settings](docs/../doc/supported.jpeg)
 
