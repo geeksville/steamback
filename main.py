@@ -523,9 +523,9 @@ class Plugin:
         await self._cull_old_saves()
 
     """
-    Given a list of game_infos, return a list of game-ids which are supported for backups
+    Given a list of game_infos, return a list of game_infos which are supported for backups
     """
-    async def find_supported(self, game_infos: list):
+    async def find_supported(self, game_infos: list) -> list[dict]:
         self = fixself(self)
 
         # if we get any sort of exception while scanning a particular game info, keep trying the others
