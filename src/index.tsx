@@ -12,10 +12,10 @@ import {
   Navigation,
   AppOverview,
   Router
-} from "decky-frontend-lib";
-import { VFC, useState, useEffect } from "react";
-import { FiDownload, FiUpload } from "react-icons/fi";
-import SteamID from "steamid";
+} from "decky-frontend-lib"
+import { VFC, useState, useEffect } from "react"
+import { FiDownload, FiUpload } from "react-icons/fi"
+import SteamID from "steamid"
 import TimeAgo from "javascript-time-ago"
 import en from "javascript-time-ago/locale/en"
 
@@ -71,8 +71,8 @@ async function makeGameInfo(game_id: number): Promise<GameInfo> {
 }
 
 const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
-  const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([]);
-  const [supportedGameInfos, setSupportedGameInfos] = useState<GameInfo[]>([]);
+  const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([])
+  const [supportedGameInfos, setSupportedGameInfos] = useState<GameInfo[]>([])
 
   // Create formatter (English).
   const timeAgo = new TimeAgo('en-US')
@@ -121,7 +121,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       <span style={{ padding: '1rem', display: 'block' }}>This plugin is currently in <b>alpha</b> testing, if you see problems use the 'Undo' button and let us know.  </span>
       {
         saveInfos.map(si => {
-          // console.log('showing saveinfo ', si);
+          // console.log('showing saveinfo ', si)
 
           const agoStr = timeAgo.format(new Date(si.timestamp))
 
@@ -133,7 +133,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
                 title: 'Steamback',
                 body: `Reverted ${si.game_info.game_name} from snapshot`,
                 icon: <FiUpload />,
-              });
+              })
             }).catch(error =>
               console.error('Steamback restore', error)
             )
@@ -205,8 +205,8 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
         {supportedHtml}
       </PanelSection>
     </div>
-  );
-};
+  )
+}
 
 
 
@@ -240,7 +240,7 @@ export default definePlugin((serverApi: ServerAPI) => {
     }
   })
 
-  let sid = new SteamID(App.m_CurrentUser.strSteamID);
+  let sid = new SteamID(App.m_CurrentUser.strSteamID)
 
   serverApi.callPluginMethod("set_account_id", {
     id_num: sid.accountid
@@ -253,7 +253,7 @@ export default definePlugin((serverApi: ServerAPI) => {
     content: <SteambackContent serverAPI={serverApi} />,
     icon: <FiDownload />,
     onDismount() {
-      taskHook!.unregister();
+      taskHook!.unregister()
     },
-  };
-});
+  }
+})
