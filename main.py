@@ -93,19 +93,36 @@ class Plugin:
         return p
 
     """
+    Return the steam root directory
+    """
+
+    def _get_steam_root(self) -> str:
+        r = "/home/deck/.local/share/Steam" if is_decky else "/home/kevinh/.steam/debian-installation"
+        return os.path.join(r)
+
+    """
     Return the path to the game directory for a specified game
     """
 
     def _get_gamedir(self, game_id: int) -> str:
-        r = "/home/deck/.local/share/Steam/userdata" if is_decky else "/home/kevinh/.steam/debian-installation/userdata"
-        return os.path.join(r, str(self.account_id), str(game_id))
+        return os.path.join(self._get_steam_root(), "userdata", str(self.account_id), str(game_id))
 
-    """read installdir from appmanifest_gameid.vdf and return it
+    """return true if the game is installed on external storage
     """
 
-    def _get_steamapps_dir(self, game_info: dict) -> str:
+    def _is_on_mmc(self, game_info: dict) -> bool:
         assert game_info["install_root"]
-        steamApps = os.path.join(game_info["install_root"], "steamapps")
+        return game_info["install_root"].startswith("/run")
+
+    """read installdir from appmanifest_gameid.vdf and return it
+
+    is_system_dir is True if instead of the game install loc you'd like us to search the system steam data
+    """
+
+    def _get_steamapps_dir(self, game_info: dict, is_system_dir: bool = False) -> str:
+        assert game_info["install_root"]
+        d = game_info["install_root"] if not is_system_dir else self._get_steam_root()
+        steamApps = os.path.join(d, "steamapps")
         return steamApps
 
     """read installdir from appmanifest_gameid.vdf and return it (or None if not found)
@@ -119,10 +136,12 @@ class Plugin:
 
     """
     Find the root directory for where savegames might be found for either windows or linux
+
+    is_system_dir is True if instead of the game install loc you'd like us to search the system steam data
     """
 
-    def _get_game_saves_root(self, game_info: dict, is_linux_game: bool) -> list[str]:
-        steamApps = self._get_steamapps_dir(game_info)
+    def _get_game_saves_root(self, game_info: dict, is_linux_game: bool, is_system_dir: bool = False) -> list[str]:
+        steamApps = self._get_steamapps_dir(game_info, is_system_dir)
 
         if is_linux_game:
             installdir = self._parse_appmanifest(game_info)
@@ -196,18 +215,32 @@ class Plugin:
     """
 
     def _search_likely_locations(self, game_info: dict, rcf: list[str]) -> str:
-        # try relative to the linux root
-        d = self._get_game_saves_root(game_info, is_linux_game=True)
-        if self._rcf_is_valid(d, rcf):
-            return d
+        roots = []
 
-        # try relative to Documents or application data on windows
-        r = self._get_game_saves_root(game_info, is_linux_game=False)
-        windowsRoots = [ 'Documents', 'Application Data']
-        for subdir in windowsRoots:
-            d = os.path.join(r, subdir)
-            if self._rcf_is_valid(d, rcf):
-                return d
+        def addRoots(is_system_dir: bool):
+            # try relative to the linux root
+            roots.append(self._get_game_saves_root(
+                game_info, is_linux_game=True, is_system_dir=is_system_dir))
+
+            # try relative to Documents or application data on windows
+            r = self._get_game_saves_root(
+                game_info, is_linux_game=False, is_system_dir=is_system_dir)
+            windowsRoots = ['Documents',
+                            'Application Data', 'AppData/LocalLow']
+            for subdir in windowsRoots:
+                d = os.path.join(r, subdir)
+                roots.append(d)
+
+        # look in the system directory first (if we might also have savegames on the mmc)
+        if(self._is_on_mmc(game_info)):
+            addRoots(True)
+
+        addRoots(False)
+
+        # logger.debug(f'Searching roots { roots }')
+        for r in roots:
+            if self._rcf_is_valid(r, rcf):
+                return r
 
         return None
 
@@ -235,9 +268,8 @@ class Plugin:
             autoclouds = self._find_autoclouds(game_info, is_linux_game=False)
 
         # If no/multiple autocloud files are found, just search in the root and see if that works
-        if not autoclouds or len(autoclouds) == 0 or len(autoclouds) > 1:
-            logger.warn(
-                f'Ambiguous autoclouds { game_info } looking for last resort')
+        if not autoclouds or len(autoclouds) != 1:
+            # okay - now check the standard doc roots for games
             d = self._search_likely_locations(game_info, rcf)
             return d
 
@@ -250,8 +282,14 @@ class Plugin:
 
     def _rcf_is_valid(self, root_dir: str, rcf: list[str]):
         for f in rcf:
-            if os.path.isfile(os.path.join(root_dir, f)):
+            full = os.path.join(root_dir, f)
+            if os.path.isfile(full):
+                logger.debug(f'RCF is valid { root_dir }')
                 return True
+            else:
+                # logger.debug(f'RCF file not found { full }')
+                pass
+        logger.debug(f'RCF invalid { root_dir }')
         return False
 
     """
