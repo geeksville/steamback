@@ -5,6 +5,6 @@
   "publish": {
     "tags": ["steamback", "backup"],
     "description": "Automatic save game snapshot/restore for Steam",
-    "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
+    "image": "https://raw.githubusercontent.com/geeksville/steamback/main/assets/screenshot.jpg"
   }
 }
