@@ -134,6 +134,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
                 body: `Reverted ${si.game_info.game_name} from snapshot`,
                 icon: <FiUpload />,
               })
+              Navigation.Navigate(`/library/app/${si.game_info.game_id}`)
             }).catch(error =>
               console.error('Steamback restore', error)
             )
