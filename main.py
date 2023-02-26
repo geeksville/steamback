@@ -226,7 +226,7 @@ class Plugin:
             r = self._get_game_saves_root(
                 game_info, is_linux_game=False, is_system_dir=is_system_dir)
             windowsRoots = ['Documents',
-                            'Application Data', 'AppData/LocalLow']
+                            'Application Data', 'AppData/LocalLow', 'Local Settings/Application Data']
             for subdir in windowsRoots:
                 d = os.path.join(r, subdir)
                 roots.append(d)
@@ -237,7 +237,7 @@ class Plugin:
 
         addRoots(False)
 
-        # logger.debug(f'Searching roots { roots }')
+        logger.debug(f'Searching roots { roots }')
         for r in roots:
             if self._rcf_is_valid(r, rcf):
                 return r
@@ -257,6 +257,11 @@ class Plugin:
             # Store the savegames directory for this game
             return remoteSaveGames
 
+        # okay - now check the standard doc roots for games - do this before looking for autoclouds because it is more often the match
+        d = self._search_likely_locations(game_info, rcf)
+        if(d):
+            return d
+
         # Alas, now we need to scan the install dir to look for steam_autocloud.vdf files.  If found that means the dev is doing the 'lazy'
         # way of just saying "backup all files due to some path we enter in our web admin console".
 
@@ -269,9 +274,7 @@ class Plugin:
 
         # If no/multiple autocloud files are found, just search in the root and see if that works
         if not autoclouds or len(autoclouds) != 1:
-            # okay - now check the standard doc roots for games
-            d = self._search_likely_locations(game_info, rcf)
-            return d
+            return None
 
         return self._find_save_root_from_autoclouds(game_info, rcf, autoclouds[0])
 
@@ -289,7 +292,7 @@ class Plugin:
             else:
                 # logger.debug(f'RCF file not found { full }')
                 pass
-        logger.debug(f'RCF invalid { root_dir }')
+        # logger.debug(f'RCF invalid { root_dir }')
         return False
 
     """
