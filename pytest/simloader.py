@@ -33,9 +33,14 @@ async def main():
     mindustry = make_game_info(1127400)
     # shapez = make_game_info(1318690)
     timberborn = make_game_info(1062090)
+    nms = make_game_info(275850)
 
     # Use less /home/kevinh/.steam/debian-installation/steamapps/appmanifest_848450.acf to find "installdir" property
     # /home/kevinh/.steam/debian-installation/steamapps/common/SubnauticaZero/SNAppData/SavedGames/
+
+    si = await p.do_backup(nms)
+    print(f'no mans sky backup results: { si }')
+    assert si is not None
 
     si = await p.do_backup(timberborn)
     print(f'timberborn backup results: { si }')

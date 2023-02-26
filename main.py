@@ -201,11 +201,13 @@ class Plugin:
         if self._rcf_is_valid(d, rcf):
             return d
 
-        # try relative to Documents on windows
-        d = self._get_game_saves_root(game_info, is_linux_game=False)
-        d = os.path.join(d, 'Documents')
-        if self._rcf_is_valid(d, rcf):
-            return d
+        # try relative to Documents or application data on windows
+        r = self._get_game_saves_root(game_info, is_linux_game=False)
+        windowsRoots = [ 'Documents', 'Application Data']
+        for subdir in windowsRoots:
+            d = os.path.join(r, subdir)
+            if self._rcf_is_valid(d, rcf):
+                return d
 
         return None
 
