@@ -217,26 +217,26 @@ export default definePlugin((serverApi: ServerAPI) => {
   const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications(async (n: LifetimeNotification) => {
     // console.log("Steamback AppLifetimeNotification", n);
 
-    if (!n.bRunning) {
-      try {
-        const gameInfo: GameInfo = await makeGameInfo(n.unAppID)
-        console.log("Steamback backup game: ", gameInfo)
-        const r = await serverApi.callPluginMethod("do_backup", {
-          game_info: gameInfo
-        })
+    // actually - we also want to check when the game is launched _also_ because steam cloud might have updated it from some other PC
+    // if (!n.bRunning) {
+    try {
+      const gameInfo: GameInfo = await makeGameInfo(n.unAppID)
+      console.log("Steamback backup game: ", gameInfo)
+      const r = await serverApi.callPluginMethod("do_backup", {
+        game_info: gameInfo
+      })
 
-        const saveinfo = r.result as SaveInfo
-        console.log("steamback backup results", saveinfo)
-        if (saveinfo)
-          serverApi.toaster.toast({
-            title: 'Steamback',
-            body: `${gameInfo.game_name} snapshot taken`,
-            icon: <FiDownload />,
-          });
-      }
-      catch (error: any) {
-        console.error('Steamback backup', error)
-      }
+      const saveinfo = r.result as SaveInfo
+      console.log("steamback backup results", saveinfo)
+      if (saveinfo)
+        serverApi.toaster.toast({
+          title: 'Steamback',
+          body: `${gameInfo.game_name} snapshot taken`,
+          icon: <FiDownload />,
+        });
+    }
+    catch (error: any) {
+      console.error('Steamback backup', error)
     }
   })
 
