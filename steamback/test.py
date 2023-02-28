@@ -1,15 +1,11 @@
-import sys, os, asyncio
 
-sys.path.append(os.path.realpath(".."))
-sys.path.append('../../decky-loader/plugin')
-
-from main import *
-
+import sys
+import os
+import asyncio
+from . import Engine
 
 """Create a game info object: contains game_id and install_root
 """
-
-
 def make_game_info(game_id: int, name: str = None) -> dict:
     info = {
         # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
@@ -20,9 +16,9 @@ def make_game_info(game_id: int, name: str = None) -> dict:
     return info
 
 
-async def main():
+async def testImpl(p: Engine):
     print('Simulating decky loader for testing...')
-    p = Plugin()
+
     await p.set_account_id(49847735)
     # print(f'Initial saveinfos { await p.get_saveinfos() }')
     p.ignore_unchanged = False  # Force backup for testing
@@ -100,4 +96,5 @@ async def main():
 
     print('Tests complete')
 
-asyncio.run(main())
+def testAll(p: Engine):
+    asyncio.run(testImpl(p))

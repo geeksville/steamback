@@ -1,8 +1,17 @@
-# General plan
+# Unformatted / not useful to others
 
 THIS IS (currently) a mostly unformatted set of notes.  If you aren't the dev for this project you probably don.t want it.
 
 react-devtools --no-sandbox
+
+## desktop todo
+
+option to scan and list supported games
+option to scan and backup all games
+option to scan and backup a particular game (for inserting into launch options)
+options to poll ps to watch for games starting/exiting.
+
+gui in tk https://stackoverflow.com/questions/24656138/python-tkinter-attach-scrollbar-to-listbox-as-opposed-to-window
 
 ## JS todo
 

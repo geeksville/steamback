@@ -4,16 +4,26 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
+        /* {
             "name": "Python: simloader",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/pytest/simloader.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/pytest",
-            "args": [
-            ],
+            "args": [],
             "justMyCode": true
-        }
+        }, */
+        {
+            "name": "Run test harness",
+            "type": "python",
+            "request": "launch",
+            "module": "steamback",
+            "justMyCode": true,
+            "args": [
+                "--debug",
+                "--test"
+            ]
+        },
     ]
 }

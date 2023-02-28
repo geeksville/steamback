@@ -1,0 +1,18 @@
+[project]
+name = "steamback"
+version = "0.3.0"
+authors = [
+  { name="Kevin Hester", email="kevinh@geeksville.com" },
+]
+description = "A python library and tool for backing up Steam save games"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GPL v3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/geeksville/steamback"
+"Bug Tracker" = "https://github.com/geeksville/steamback/issues"
