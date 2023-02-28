@@ -16,6 +16,8 @@ logger = None
 """Try to parse a valve vdf file.  Returning all key/value pairs it finds as string pairs.
 Note: this doesn't preserve hierarchy - only keys are checked
 """
+
+
 def _parse_vcf(path: str) -> dict:
     kvMatch = re.compile('\s*"(.+)"\s+"(.+)"\s*')
     d = {}
@@ -26,6 +28,7 @@ def _parse_vcf(path: str) -> dict:
             if m:
                 d[m.group(1)] = m.group(2)
     return d
+
 
 class Config(NamedTuple):
     logger: logging.Logger
@@ -110,6 +113,29 @@ class Engine:
             app_dir, f'appmanifest_{ game_info["game_id"] }.acf'))
         install_dir = vcf.get("installdir", None)
         return install_dir
+
+    """Return all games that can be found on this system (only used for python apps - when in Decky this comes from JS)
+    """
+
+    def find_all_game_info(self) -> list[dict]:
+        steam_dir = self.get_steam_root()
+        app_dir = os.path.join(steam_dir, "steamapps")
+        files = filter(lambda f: f.startswith("appmanifest_")
+                       and f.endswith(".acf"), os.listdir(app_dir))
+        r = []
+        for f in files:
+            vcf = _parse_vcf(os.path.join(app_dir, f))
+            id = vcf.get("appid", None)
+            name = vcf.get("name", None)
+            if id and name:
+                info = {
+                    # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
+                    "install_root": steam_dir,
+                    "game_id": int(id),
+                    "game_name": name
+                }
+                r.append(info)
+        return r
 
     """
     Find the root directory for where savegames might be found for either windows or linux

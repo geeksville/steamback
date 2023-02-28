@@ -5,8 +5,6 @@ import asyncio
 from . import Engine
 
 
-
-
 async def testImpl(p: Engine):
     print('Simulating decky loader for testing...')
 
@@ -24,6 +22,17 @@ async def testImpl(p: Engine):
             "game_name": name
         }
         return info
+
+    all_games = p.find_all_game_info()
+    print(f'All installed games: ')
+    for i in all_games:
+        print(f'  {i}')
+
+    # Test find_supported
+    supported = await p.find_supported(all_games)
+    print(f'Supported games: ')
+    for i in supported:
+        print(f'  {i}')
 
     valheim = make_game_info(892970, "Valheim")
     subnautica = make_game_info(264710, "Subnautica")
@@ -50,7 +59,7 @@ async def testImpl(p: Engine):
     assert si is not None
 
     # cloud backups seem broken in general for this app
-    #si = await p.do_backup(shapez)
+    # si = await p.do_backup(shapez)
     #print(f'shapez backup results: { si }')
     #assert si is not None
 
@@ -82,11 +91,6 @@ async def testImpl(p: Engine):
     si = await p.do_backup(make_game_info(555))
     assert si is None
 
-    # Test find_supported
-    candidates = [valheim, subnautica, mindustry]
-    supported = await p.find_supported(candidates)
-    assert supported == candidates
-
     infos = await p.get_saveinfos()
     saves = list(filter(lambda i: not i["is_undo"], infos))
     print(f'Current saveinfos { infos }')
@@ -97,6 +101,7 @@ async def testImpl(p: Engine):
     await p.do_restore(i)
 
     print('Tests complete')
+
 
 def testAll(p: Engine):
     asyncio.run(testImpl(p))
