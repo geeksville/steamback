@@ -12,6 +12,9 @@ classifiers = [
     "License :: OSI Approved :: GPL v3",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "platformdirs ~= 3",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/geeksville/steamback"
