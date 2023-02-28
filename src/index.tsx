@@ -161,7 +161,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           // console.log("running apps", runningApps, si.game_id, runningApps.has(si.game_id))
           const buttonText = si.is_undo ? `Undo` : `Revert`
           const labelText = si.game_info.game_name
-          const descText = si.is_undo ? `Reverts recent Stemback changes` : `Snapshot from ${agoStr}`
+          const descText = si.is_undo ? `Reverts recent Steamback changes` : `Snapshot from ${agoStr}`
           // bottomSeparator="none" label="some label" layout="below"
           return <PanelSectionRow>
             <ButtonItem onClick={askRestore}
