@@ -10,25 +10,22 @@ import logging
 import re
 from pathlib import Path
 
-"""Try to parse a valve vdf file.  Looking for an entry with the specified key.
-If found return the value that goes with that key, else return None.
-
-(Used to parse appmanifest_GAMEID.acf files finding "installdir")
-"""
 
 logger = None
 
-
-def _parse_vcf(path: str, key: str) -> str:
+"""Try to parse a valve vdf file.  Returning all key/value pairs it finds as string pairs.
+Note: this doesn't preserve hierarchy - only keys are checked
+"""
+def _parse_vcf(path: str) -> dict:
     kvMatch = re.compile('\s*"(.+)"\s+"(.+)"\s*')
+    d = {}
     with open(path) as f:
         for line in f:
             # ignore leading/trailing space.  Now ideal like looks like "key"   "value"
             m = kvMatch.fullmatch(line)
-            if m and m.group(1) == key:
-                return m.group(2)
-    return None
-
+            if m:
+                d[m.group(1)] = m.group(2)
+    return d
 
 class Config(NamedTuple):
     logger: logging.Logger
@@ -107,11 +104,12 @@ class Engine:
     """read installdir from appmanifest_gameid.vdf and return it (or None if not found)
     """
 
-    def _parse_appmanifest(self, game_info: dict) -> str:
-        appdir = self._get_steamapps_dir(game_info)
-        installdir = _parse_vcf(os.path.join(
-            appdir, f'appmanifest_{ game_info["game_id"] }.acf'), "installdir")
-        return installdir
+    def _parse_installdir(self, game_info: dict) -> str:
+        app_dir = self._get_steamapps_dir(game_info)
+        vcf = _parse_vcf(os.path.join(
+            app_dir, f'appmanifest_{ game_info["game_id"] }.acf'))
+        install_dir = vcf.get("installdir", None)
+        return install_dir
 
     """
     Find the root directory for where savegames might be found for either windows or linux
@@ -123,7 +121,7 @@ class Engine:
         steamApps = self._get_steamapps_dir(game_info, is_system_dir)
 
         if is_linux_game:
-            installdir = self._parse_appmanifest(game_info)
+            installdir = self._parse_installdir(game_info)
             rootdir = os.path.join(steamApps, "common", installdir)
         else:
             rootdir = os.path.join(
