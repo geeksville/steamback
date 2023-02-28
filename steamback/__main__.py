@@ -1,11 +1,13 @@
 #!python3
- 
+
 import argparse
 import logging
-from . import Engine, test
+import os
+from . import Engine, Config, test
 
 """The command line arguments"""
 args = None
+
 
 def main():
     """Perform command line steamback operations"""
@@ -22,7 +24,12 @@ def main():
     logger = logging.getLogger()
     logger.info(f'Steamback running...')
 
-    e = Engine(logger)
+    # FIXME - I bet the following will need tweaking for Windows
+    steam_dir = os.path.join(os.path.expanduser(
+        "~"), ".steam", "debian-installation")
+
+    config = Config(logger, "/tmp/steamback", steam_dir)
+    e = Engine(config)
     if args.test:
         test.testAll(e)
 

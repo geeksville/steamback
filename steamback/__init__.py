@@ -1,5 +1,6 @@
 #!python3
 
+from typing import NamedTuple
 import re
 import json
 import time
@@ -9,8 +10,6 @@ import logging
 import re
 from pathlib import Path
 
-is_decky = True
-
 """Try to parse a valve vdf file.  Looking for an entry with the specified key.
 If found return the value that goes with that key, else return None.
 
@@ -18,6 +17,7 @@ If found return the value that goes with that key, else return None.
 """
 
 logger = None
+
 
 def _parse_vcf(path: str, key: str) -> str:
     kvMatch = re.compile('\s*"(.+)"\s+"(.+)"\s*')
@@ -30,21 +30,25 @@ def _parse_vcf(path: str, key: str) -> str:
     return None
 
 
+class Config(NamedTuple):
+    logger: logging.Logger
+    app_data_dir: str  # where app specific data files are stored
+    steam_dir: str  # the root of the Steam data files
+
+
 class Engine:
-    def __init__(self, loggerIn):
+    def __init__(self, config: Config):
         global logger
-        logger = loggerIn
+        logger = config.logger
         # logger.setLevel(logging.INFO) # can be changed to logging.DEBUG for debugging issues
         # can be changed to logging.DEBUG for debugging issues
-        logger.setLevel(logging.DEBUG)
 
-        global is_decky
-        try:
-            os.environ["DECKY_PLUGIN_RUNTIME_DIR"]
-            logger.info('Running under decky')
-        except:
-            is_decky = False  # if we didn't throw that envar is set
-            logger.info('Simulating decky')
+        self.config = config
+        # try:
+        #    os.environ["DECKY_PLUGIN_RUNTIME_DIR"]
+        #    logger.info('Running under decky')
+        # except:
+        #    logger.info('Simulating decky')
 
         self.account_id = 0
         self.dry_run = False  # Set to true to suppress 'real' writes to directories
@@ -61,11 +65,8 @@ class Engine:
     """
 
     def _get_savesdir(self) -> str:
-        # We want to allow testing when not running under decky
-        r = os.environ["DECKY_PLUGIN_RUNTIME_DIR"] if is_decky else "/tmp/steamback"
-
         # we now use a new directory for saves (because metaformat changed) - original version was never released
-        p = os.path.join(r, "saves2")
+        p = os.path.join(self.config.app_data_dir, "saves2")
         if not os.path.exists(p):
             os.makedirs(p)
         # logger.debug(f'Using saves directory { p }')
@@ -75,16 +76,15 @@ class Engine:
     Return the steam root directory
     """
 
-    def _get_steam_root(self) -> str:
-        r = "/home/deck/.local/share/Steam" if is_decky else "/home/kevinh/.steam/debian-installation"
-        return os.path.join(r)
+    def get_steam_root(self) -> str:
+        return self.config.steam_dir
 
     """
     Return the path to the game directory for a specified game
     """
 
     def _get_gamedir(self, game_id: int) -> str:
-        return os.path.join(self._get_steam_root(), "userdata", str(self.account_id), str(game_id))
+        return os.path.join(self.get_steam_root(), "userdata", str(self.account_id), str(game_id))
 
     """return true if the game is installed on external storage
     """
@@ -100,7 +100,7 @@ class Engine:
 
     def _get_steamapps_dir(self, game_info: dict, is_system_dir: bool = False) -> str:
         assert game_info["install_root"]
-        d = game_info["install_root"] if not is_system_dir else self._get_steam_root()
+        d = game_info["install_root"] if not is_system_dir else self.get_steam_root()
         steamApps = os.path.join(d, "steamapps")
         return steamApps
 

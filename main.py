@@ -30,10 +30,13 @@ def get_engine() -> object:
     global pinstance
 
     if not pinstance:
-        pinstance = steamback.Engine(logger)
+        app_data_dir = os.environ["DECKY_PLUGIN_RUNTIME_DIR"]
+        steam_dir = os.path.join(os.path.expanduser(
+            "~"), ".local", "share", "Steam")
+        config = steamback.Config(logger, app_data_dir, steam_dir)
+        pinstance = steamback.Engine(config)
     self = pinstance
     return self
-
 
 
 class Plugin:
