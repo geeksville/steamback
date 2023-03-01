@@ -13,6 +13,8 @@ options to poll ps to watch for games starting/exiting.
 
 gui in tk https://stackoverflow.com/questions/24656138/python-tkinter-attach-scrollbar-to-listbox-as-opposed-to-window
 
+use async tkinker https://pypi.org/project/async-tkinter-loop/
+
 ## JS todo
 
 fix game infos

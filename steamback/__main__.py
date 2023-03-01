@@ -4,7 +4,8 @@ import argparse
 import logging
 import os
 import platformdirs
-from . import Engine, Config, test
+import asyncio
+from . import Engine, Config, test, util
 
 """The command line arguments"""
 args = None
@@ -16,6 +17,8 @@ def main():
     parser.add_argument("--debug", help="Show debug log messages",
                         action="store_true")
     parser.add_argument("--test", help="Run integration code test",
+                        action="store_true")
+    parser.add_argument("--daemon", help="Run as a daemon that just looks for games to backup",
                         action="store_true")
 
     global args
@@ -32,11 +35,16 @@ def main():
     app_name = "steamback"
     app_author = "geeksville"
     app_dir = platformdirs.user_data_dir(app_name, app_author)
+    logger.info(f'Storing application data in { app_dir }')
 
     config = Config(logger, app_dir, steam_dir)
     e = Engine(config)
+    e.auto_set_account_id()
+
     if args.test:
-        test.testAll(e)
+        asyncio.run(test.testImpl(e))
+    elif args.daemon:
+        asyncio.run(util.backup_daemon(e))
 
 
 if __name__ == "__main__":

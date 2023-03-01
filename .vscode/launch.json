@@ -25,5 +25,16 @@
                 "--test"
             ]
         },
+        {
+            "name": "Run backup daemon",
+            "type": "python",
+            "request": "launch",
+            "module": "steamback",
+            "justMyCode": true,
+            "args": [
+                "--debug",
+                "--daemon"
+            ]
+        },
     ]
 }

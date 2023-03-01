@@ -56,9 +56,23 @@ class Engine:
         # don't generate backups if the files haven't changed since last backup
         self.ignore_unchanged = True
 
-    async def set_account_id(self, id_num: int):
+    def set_account_id(self, id_num: int):
         self.account_id = id_num
         pass
+
+
+    """Find the steam account ID for the current user (and)
+
+    We look for a directory in userdata/accountname.  If there are multiple account names we currently throw an exception
+    eventually we could look at the config file in each of those dirs to see which one was touched most recently.
+    """
+    def auto_set_account_id(self) -> int:
+        files = os.listdir(os.path.join(self.get_steam_root(), "userdata"))
+        ids = list(filter(lambda i: i is not None, map(lambda f: int(f) if f.isnumeric() else None, files)))
+        assert len(files) == 1  # Is there exactly one account dir?
+        id = ids[0]
+        self.set_account_id(id)
+        return id
 
     """
     Return the saves directory path (creating it if necessary)
@@ -84,6 +98,7 @@ class Engine:
     """
 
     def _get_gamedir(self, game_id: int) -> str:
+        assert self.account_id # better be set by now
         return os.path.join(self.get_steam_root(), "userdata", str(self.account_id), str(game_id))
 
     """return true if the game is installed on external storage
@@ -255,10 +270,11 @@ class Engine:
         d = self._get_gamedir(game_info["game_id"])
 
         # First check to see if the game uses the 'new' "remote" directory approach to save files (i.e. they used the steam backup API from the app)
-        remoteSaveGames = os.path.join(d, "remote")
-        if os.path.isdir(remoteSaveGames):
+        fullRemotes = (os.path.join(d, x) for x in [ "remote", "ac/LinuxXdgDataHome"])
+        remoteFound = next((x for x in fullRemotes if os.path.isdir(x)), None)
+        if remoteFound:
             # Store the savegames directory for this game
-            return remoteSaveGames
+            return remoteFound
 
         # okay - now check the standard doc roots for games - do this before looking for autoclouds because it is more often the match
         d = self._search_likely_locations(game_info, rcf)
@@ -403,7 +419,7 @@ class Engine:
             else:
                 # logger.warn(f'Not copying missing file { k }')
                 pass
-        logger.debug(
+        logger.info(
             f'Copied { numCopied } files from { src_dir } to { dest_dir }')
 
     """

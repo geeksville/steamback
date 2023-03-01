@@ -3,6 +3,7 @@ import sys
 import os
 import asyncio
 from . import Engine
+from .util import make_game_info
 
 
 async def testImpl(p: Engine):
@@ -11,17 +12,6 @@ async def testImpl(p: Engine):
     await p.set_account_id(49847735)
     # print(f'Initial saveinfos { await p.get_saveinfos() }')
     p.ignore_unchanged = False  # Force backup for testing
-
-    """Create a game info object: contains game_id and install_root
-    """
-    def make_game_info(game_id: int, name: str = None) -> dict:
-        info = {
-            # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
-            "install_root": p.get_steam_root(),
-            "game_id": game_id,
-            "game_name": name
-        }
-        return info
 
     all_games = p.find_all_game_info()
     print(f'All installed games: ')
@@ -34,14 +24,14 @@ async def testImpl(p: Engine):
     for i in supported:
         print(f'  {i}')
 
-    valheim = make_game_info(892970, "Valheim")
-    subnautica = make_game_info(264710, "Subnautica")
-    subnauticabz = make_game_info(848450, "Subnautica Below Zero")
-    mindustry = make_game_info(1127400)
-    # shapez = make_game_info(1318690)
-    timberborn = make_game_info(1062090)
-    nms = make_game_info(275850)
-    garfield = make_game_info(1085510)
+    valheim = make_game_info(p, 892970, "Valheim")
+    subnautica = make_game_info(p, 264710, "Subnautica")
+    subnauticabz = make_game_info(p, 848450, "Subnautica Below Zero")
+    mindustry = make_game_info(p, 1127400)
+    # shapez = make_game_info(p,1318690)
+    timberborn = make_game_info(p, 1062090)
+    nms = make_game_info(p, 275850)
+    garfield = make_game_info(p, 1085510)
 
     # Use less .steam/debian-installation/steamapps/appmanifest_848450.acf to find "installdir" property
     # .steam/debian-installation/steamapps/common/SubnauticaZero/SNAppData/SavedGames/
@@ -80,7 +70,7 @@ async def testImpl(p: Engine):
     assert si is not None
 
     # Test a game with formerly unsupported vdf (raft)
-    si = await p.do_backup(make_game_info(648800, "Raft"))
+    si = await p.do_backup(make_game_info(p, 648800, "Raft"))
     assert si is not None
 
     p.ignore_unchanged = True  # following backup should be skipped because no changes
@@ -88,7 +78,7 @@ async def testImpl(p: Engine):
     assert si is None
 
     # Test a game that should not exist
-    si = await p.do_backup(make_game_info(555))
+    si = await p.do_backup(make_game_info(p, 555))
     assert si is None
 
     infos = await p.get_saveinfos()
@@ -101,7 +91,3 @@ async def testImpl(p: Engine):
     await p.do_restore(i)
 
     print('Tests complete')
-
-
-def testAll(p: Engine):
-    asyncio.run(testImpl(p))
