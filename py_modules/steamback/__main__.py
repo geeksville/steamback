@@ -5,7 +5,7 @@ import logging
 import os
 import platformdirs
 import asyncio
-from . import Engine, Config, test, util
+from . import Engine, Config, test, util, gui
 
 """The command line arguments"""
 args = None
@@ -45,7 +45,8 @@ def main():
         asyncio.run(test.testImpl(e))
     elif args.daemon:
         asyncio.run(util.backup_daemon(e))
-
+    else:
+        gui.run(e)
 
 if __name__ == "__main__":
     main()

@@ -36,5 +36,15 @@
                 "--daemon"
             ]
         },
+        {
+            "name": "Run desktop gui",
+            "type": "python",
+            "request": "launch",
+            "module": "py_modules.steamback",
+            "justMyCode": true,
+            "args": [
+                "--debug"
+            ]
+        },
     ]
 }
