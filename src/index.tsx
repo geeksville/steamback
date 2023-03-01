@@ -115,10 +115,10 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   }, []) // extra [] at end means only run for first render
 
   /// Only show snapshot section if we have some saveinfos
+  // removed alpha disclaimer: <span style={{ padding: '1rem', display: 'block' }}>This plugin is currently in <b>alpha</b> testing, if you see problems use the 'Undo' button and let us know.  </span>
   const snapshotHtml = saveInfos.length < 1 ?
     <div></div> :
     <PanelSection title="Snapshots">
-      <span style={{ padding: '1rem', display: 'block' }}>This plugin is currently in <b>alpha</b> testing, if you see problems use the 'Undo' button and let us know.  </span>
       {
         saveInfos.map(si => {
           // console.log('showing saveinfo ', si)
