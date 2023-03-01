@@ -15,7 +15,8 @@ classifiers = [
 dependencies = [
     "platformdirs ~= 3",
     "psutil ~= 5",
-    "async-tkinter-loop"
+    "async-tkinter-loop",
+    "sv-ttk"
 ]
 
 [project.urls]

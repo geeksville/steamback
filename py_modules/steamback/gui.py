@@ -1,7 +1,9 @@
 #!python3
 
 
-from tkinter import Tk, Label, Button, StringVar, Listbox
+import tkinter
+from tkinter import ttk 
+import sv_ttk
 from async_tkinter_loop import async_handler, main_loop
 import asyncio
 from . import Engine
@@ -9,7 +11,7 @@ from . import Engine
 class GUI:
   
 
-    def __init__(self, master: Tk, e: Engine):
+    def __init__(self, master: tkinter.Tk, e: Engine):
         self.master = master
         self.engine = e
         master.title("Steamback")
@@ -21,25 +23,23 @@ class GUI:
         self.label.bind("<Button-1>", self.cycle_label_text)
         self.label.pack() """
 
-        self.greet_button = Button(master, text="Greet", command=self.greet)
+        self.greet_button = ttk.Button(master, text="Greet", command=self.greet)
         self.greet_button.pack()
 
-        self.close_button = Button(master, text="Close", command=master.quit)
+        self.close_button = ttk.Button(master, text="Close", command=master.quit)
         self.close_button.pack()
 
         # create listbox object
-        self.supported_games = Listbox(master, height=10,
-                        width=15,
-                        bg="grey",
-                        activestyle='dotbox',
-                        font="Helvetica",
-                        fg="yellow")
+        self.supported_games = tkinter.Listbox(master, 
+                        # bg="grey",
+                        # activestyle='dotbox'
+                        )
 
         # Define the size of the window.
         master.geometry("300x250")
 
         # Define a label for the list.
-        label = Label(master, text="Supported Games")
+        label = ttk.Label(master, text="Supported Games")
 
         # pack the widgets
         label.pack()
@@ -75,7 +75,15 @@ class GUI:
 """
 
 def run(e: Engine):
-    root = Tk()
+
+    root = tkinter.Tk()
+
+    # to make tk less ugly https://www.reddit.com/r/Python/comments/lps11c/how_to_make_tkinter_look_modern_how_to_use_themes/
+    # style = Style(root)
+    # Set the theme with the theme_use method
+    # style.theme_use('clam')  # put the theme name here, that you want to use
+    sv_ttk.set_theme("dark")
+
     g = GUI(root, e)
     # async_mainloop(root)
 
