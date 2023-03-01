@@ -126,6 +126,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           const agoStr = timeAgo.format(new Date(si.timestamp))
 
           const doRestore = () => {
+            console.info(`Doing steamback restore on {si}`)
             serverAPI.callPluginMethod("do_restore", {
               save_info: si
             }).then(() => {
@@ -213,6 +214,8 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
 
 export default definePlugin((serverApi: ServerAPI) => {
 
+  //console.info('IN STEAMBACK!')
+
   TimeAgo.addDefaultLocale(en)
 
   const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications(async (n: LifetimeNotification) => {
@@ -243,6 +246,7 @@ export default definePlugin((serverApi: ServerAPI) => {
 
   let sid = new SteamID(App.m_CurrentUser.strSteamID)
 
+  // console.debug(`Setting steamback account id ${sid.accountid}`)
   serverApi.callPluginMethod("set_account_id", {
     id_num: sid.accountid
   }).catch(e =>

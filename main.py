@@ -15,34 +15,29 @@ import decky_plugin
 
 logger = decky_plugin.logger
 
-# logger.setLevel(logging.INFO) # can be changed to logging.DEBUG for debugging issues
-# can be changed to logging.DEBUG for debugging issues
-
-logger.setLevel(logging.DEBUG)
-
 
 pinstance = None
 
-"""Work around for busted decky creation"""
-
-
 def get_engine() -> object:
-    global pinstance
+    # we change logging levels late because if done too early it has no effect
+    logger.setLevel(logging.DEBUG)
 
+    global pinstance
     if not pinstance:
         app_data_dir = os.environ["DECKY_PLUGIN_RUNTIME_DIR"]
         steam_dir = os.path.join(os.path.expanduser(
             "~"), ".local", "share", "Steam")
         config = steamback.Config(logger, app_data_dir, steam_dir)
         pinstance = steamback.Engine(config)
-    self = pinstance
-    return self
+    return pinstance
 
 
 class Plugin:
 
     async def set_account_id(self, id_num: int):
-        get_engine().set_account_id = id_num
+        # logger.info(f'Setting account id { id_num }')
+        get_engine().set_account_id(id_num)
+        return None # Must return something to prevent assertion error logspam in JS
 
     """
     Backup a particular game.
@@ -52,19 +47,19 @@ class Plugin:
     game_info is a dict of game_id and install_root
     """
     async def do_backup(self, game_info: dict) -> dict:
-        return get_engine().do_backup(game_info)
+        return await get_engine().do_backup(game_info)
 
     """
     Restore a particular savegame using the saveinfo object
     """
     async def do_restore(self, save_info: dict):
-        return get_engine().do_restore(game_info)
+        return await get_engine().do_restore(save_info)
 
     """
     Given a list of game_infos, return a list of game_infos which are supported for backups
     """
     async def find_supported(self, game_infos: list) -> list[dict]:
-        return get_engine().find_supported(game_infos)
+        return await get_engine().find_supported(game_infos)
 
     """
     Return all available saves, newest save first and undo as the absolute first
@@ -72,7 +67,7 @@ class Plugin:
     Returns an array of SaveInfo objects
     """
     async def get_saveinfos(self) -> list[dict]:
-        return get_engine().get_saveinfos()
+        return await get_engine().get_saveinfos()
 
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self):

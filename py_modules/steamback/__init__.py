@@ -8,6 +8,7 @@ import os
 import shutil
 import logging
 import re
+import traceback
 from pathlib import Path
 
 
@@ -48,7 +49,8 @@ class Engine:
         #    os.environ["DECKY_PLUGIN_RUNTIME_DIR"]
         #    logger.info('Running under decky')
         # except:
-        #    logger.info('Simulating decky')
+
+        logger.info(f'Steamback engine created: { config }')
 
         self.account_id = 0
         self.dry_run = False  # Set to true to suppress 'real' writes to directories
@@ -57,9 +59,8 @@ class Engine:
         self.ignore_unchanged = True
 
     def set_account_id(self, id_num: int):
+        logger.debug(f'Setting account id { id_num } on { self }')
         self.account_id = id_num
-        pass
-
 
     """Find the steam account ID for the current user (and)
 
@@ -321,10 +322,10 @@ class Engine:
     def _read_rcf(self, game_info: dict) -> list[str]:
         d = self._get_gamedir(game_info["game_id"])
         path = os.path.join(d, "remotecache.vdf")
+        # logger.debug(f'Read rcf {path}')
 
         rcf = []
         if os.path.isfile(path):
-            # logger.debug(f'Read rcf {path}')
             with open(path) as f:
                 s = f.read()  # read full file as a string
                 lines = s.split('\n')
@@ -355,6 +356,8 @@ class Engine:
         else:
             logger.debug(f'No rcf {path}')
             return None
+
+        # logger.debug(f'Read rcf with { len(rcf) } entries')
 
         # If we haven't already found where the savegames for this app live, do so now (or fail if not findable)
         if not "save_games_root" in game_info:
@@ -563,6 +566,7 @@ class Engine:
     Restore a particular savegame using the saveinfo object
     """
     async def do_restore(self, save_info: dict):
+        # logger.debug(f'In do_restore for { save_info }')
         game_info = save_info["game_info"]
         rcf = self._read_rcf(game_info)
         assert rcf
@@ -588,11 +592,14 @@ class Engine:
         # if we get any sort of exception while scanning a particular game info, keep trying the others
         def try_rcf(info):
             try:
+                # logger.debug(f'try_rcf { info }')
                 return self._read_rcf(info)
             except Exception as e:
-                logger.error(f'Error scanning rcf for {info}')
+                logger.error(
+                    f'Error scanning rcf for {info}, exception { traceback.format_exc() }')
                 return None
 
+        # logger.debug(f'find supported { game_infos }')
         supported = list(filter(try_rcf, game_infos))
         return supported
 

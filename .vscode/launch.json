@@ -18,7 +18,7 @@
             "name": "Run test harness",
             "type": "python",
             "request": "launch",
-            "module": "steamback",
+            "module": "py_modules.steamback",
             "justMyCode": true,
             "args": [
                 "--debug",
@@ -29,7 +29,7 @@
             "name": "Run backup daemon",
             "type": "python",
             "request": "launch",
-            "module": "steamback",
+            "module": "py_modules.steamback",
             "justMyCode": true,
             "args": [
                 "--debug",
