@@ -126,7 +126,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           const agoStr = timeAgo.format(new Date(si.timestamp))
 
           const doRestore = () => {
-            console.info(`Doing steamback restore on {si}`)
+            console.info('Doing steamback restore', si)
             serverAPI.callPluginMethod("do_restore", {
               save_info: si
             }).then(() => {
