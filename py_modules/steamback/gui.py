@@ -4,7 +4,9 @@
 from tkinter import *
 from tkinter import ttk
 import sv_ttk
-from async_tkinter_loop import async_handler, main_loop
+import datetime
+import timeago
+from async_tkinter_loop import async_handler
 import asyncio
 from . import Engine, util
 
@@ -19,6 +21,22 @@ def add_scrollbar(view: ttk.Treeview) -> ttk.Scrollbar:
     view.configure(yscrollcommand=b.set)
 
     return b
+
+
+async def main_loop(root: Tk) -> None:
+    """
+    An asynchronous implementation of tkinter mainloop
+    :param root: tkinter root object
+    :return: nothing
+    """
+    while True:
+        try:
+            root.winfo_exists()  # Will throw TclError if the main window is destroyed
+            root.update()
+        except TclError:
+            break
+
+        await asyncio.sleep(0.1)
 
 
 class GUI:
@@ -45,7 +63,7 @@ class GUI:
 
         # Define a label for the list.
         self.status = ttk.Label(
-            root, text="Status: Waiting for games to exit...")
+            root, text="Status: Watching Steam for game exit...")
 
         # List supported games
         treev = ttk.Treeview(root,
@@ -118,8 +136,6 @@ class GUI:
 
     async def find_supported(self):
         all_games = self.engine.find_all_game_info()
-        for i in all_games:
-            print(f'  {i}')
 
         supported = await self.engine.find_supported(all_games)
         tree = self.supported_games
@@ -136,9 +152,15 @@ class GUI:
         tree = self.save_games
         tree.delete(*tree.get_children())
         for g in saveinfos:
-            print(f'  {g}')
+            # print(f'  {g}')
+
+            # our timestamps are in msecs
+            now = datetime.datetime.now()
+            ts = datetime.datetime.fromtimestamp(g["timestamp"] / 1000.0)
+            ts_str = timeago.format(ts, now)
+
             tree.insert(
-                "", END, values=(g["game_info"]["game_name"], ))
+                "", END, values=(g["game_info"]["game_name"], ts_str))
 
     """Look for steam changes, and then queue up looking again"""
     async def watch_steam(self):

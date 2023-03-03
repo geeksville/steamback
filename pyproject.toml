@@ -16,7 +16,8 @@ dependencies = [
     "platformdirs ~= 3",
     "psutil ~= 5",
     "async-tkinter-loop",
-    "sv-ttk"
+    "sv-ttk",
+    "timeago"
 ]
 
 [project.urls]
