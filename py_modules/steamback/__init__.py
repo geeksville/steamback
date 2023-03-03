@@ -52,6 +52,8 @@ class Engine:
 
         logger.info(f'Steamback engine created: { config }')
 
+        # a dict from gameid -> gameinfo for all installed games.  ONLY USED ON DESKTOP not DECKY
+        self.all_games = None
         self.account_id = 0
         self.dry_run = False  # Set to true to suppress 'real' writes to directories
 
@@ -67,9 +69,11 @@ class Engine:
     We look for a directory in userdata/accountname.  If there are multiple account names we currently throw an exception
     eventually we could look at the config file in each of those dirs to see which one was touched most recently.
     """
+
     def auto_set_account_id(self) -> int:
         files = os.listdir(os.path.join(self.get_steam_root(), "userdata"))
-        ids = list(filter(lambda i: i is not None, map(lambda f: int(f) if f.isnumeric() else None, files)))
+        ids = list(filter(lambda i: i is not None, map(
+            lambda f: int(f) if f.isnumeric() else None, files)))
         assert len(files) == 1  # Is there exactly one account dir?
         id = ids[0]
         self.set_account_id(id)
@@ -99,7 +103,7 @@ class Engine:
     """
 
     def _get_gamedir(self, game_id: int) -> str:
-        assert self.account_id # better be set by now
+        assert self.account_id  # better be set by now
         return os.path.join(self.get_steam_root(), "userdata", str(self.account_id), str(game_id))
 
     """return true if the game is installed on external storage
@@ -139,18 +143,23 @@ class Engine:
         files = filter(lambda f: f.startswith("appmanifest_")
                        and f.endswith(".acf"), os.listdir(app_dir))
         r = []
+        rdict = {}  # a dict from game id int to the gameinfo object
         for f in files:
             vcf = _parse_vcf(os.path.join(app_dir, f))
             id = vcf.get("appid", None)
             name = vcf.get("name", None)
             if id and name:
+                id = int(id)
                 info = {
                     # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
                     "install_root": steam_dir,
-                    "game_id": int(id),
+                    "game_id": id,
                     "game_name": name
                 }
                 r.append(info)
+                rdict[id] = info
+
+        self.all_games = rdict
         return r
 
     """
@@ -251,7 +260,7 @@ class Engine:
                 roots.append(d)
 
         # look in the system directory first (if we might also have savegames on the mmc)
-        if(self._is_on_mmc(game_info)):
+        if (self._is_on_mmc(game_info)):
             addRoots(True)
 
         addRoots(False)
@@ -271,7 +280,8 @@ class Engine:
         d = self._get_gamedir(game_info["game_id"])
 
         # First check to see if the game uses the 'new' "remote" directory approach to save files (i.e. they used the steam backup API from the app)
-        fullRemotes = (os.path.join(d, x) for x in [ "remote", "ac/LinuxXdgDataHome"])
+        fullRemotes = (os.path.join(d, x)
+                       for x in ["remote", "ac/LinuxXdgDataHome"])
         remoteFound = next((x for x in fullRemotes if os.path.isdir(x)), None)
         if remoteFound:
             # Store the savegames directory for this game
@@ -279,7 +289,7 @@ class Engine:
 
         # okay - now check the standard doc roots for games - do this before looking for autoclouds because it is more often the match
         d = self._search_likely_locations(game_info, rcf)
-        if(d):
+        if (d):
             return d
 
         # Alas, now we need to scan the install dir to look for steam_autocloud.vdf files.  If found that means the dev is doing the 'lazy'

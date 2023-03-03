@@ -1,71 +1,170 @@
 #!python3
 
 
-import tkinter
-from tkinter import ttk 
+from tkinter import *
+from tkinter import ttk
 import sv_ttk
 from async_tkinter_loop import async_handler, main_loop
 import asyncio
-from . import Engine
+from . import Engine, util
+
+
+def add_scrollbar(view: ttk.Treeview) -> ttk.Scrollbar:
+    root = view.master
+    b = ttk.Scrollbar(root,
+                      orient="vertical",
+                      command=view.yview)
+
+    # Configuring treeview
+    view.configure(yscrollcommand=b.set)
+
+    return b
+
 
 class GUI:
-  
 
-    def __init__(self, master: tkinter.Tk, e: Engine):
-        self.master = master
+    def __init__(self, root: Tk, e: Engine):
+        self.root = root
         self.engine = e
-        master.title("Steamback")
+        self.watcher = util.SteamWatcher(e)
+        root.title("Steamback")
+        root.resizable(width=300, height=200)
 
         """ self.label_index = 0
         self.label_text = StringVar()
         self.label_text.set(self.LABEL_TEXT[self.label_index])
-        self.label = Label(master, textvariable=self.label_text)
+        self.label = Label(root, textvariable=self.label_text)
         self.label.bind("<Button-1>", self.cycle_label_text)
         self.label.pack() """
 
-        self.greet_button = ttk.Button(master, text="Greet", command=self.greet)
-        self.greet_button.pack()
+        # self.greet_button = ttk.Button(root, text="Greet", command=self.greet)
+        # self.greet_button.pack()
 
-        self.close_button = ttk.Button(master, text="Close", command=master.quit)
-        self.close_button.pack()
-
-        # create listbox object
-        self.supported_games = tkinter.Listbox(master, 
-                        # bg="grey",
-                        # activestyle='dotbox'
-                        )
-
-        # Define the size of the window.
-        master.geometry("300x250")
+        # self.close_button = ttk.Button(root, text="Close", command=root.quit)
+        # self.close_button.pack()
 
         # Define a label for the list.
-        label = ttk.Label(master, text="Supported Games")
+        self.status = ttk.Label(
+            root, text="Status: Waiting for games to exit...")
 
-        # pack the widgets
-        label.pack()
-        self.supported_games.pack()
+        # List supported games
+        treev = ttk.Treeview(root,
+                             selectmode='browse'
+                             # bg="grey",
+                             # activestyle='dotbox'
+                             )
+        self.supported_games = treev
+
+        s_sb = add_scrollbar(treev)
+
+        # Defining number of columns
+        treev["columns"] = ("name",)
+
+        # Defining heading
+        treev['show'] = 'headings'
+        treev.heading("name", text="Supported Games")
+
+        # List supported games
+        treev = ttk.Treeview(root,
+                             selectmode='none'
+                             # bg="grey",
+                             # activestyle='dotbox'
+                             )
+        self.supported_games = treev
+
+        games_sb = add_scrollbar(treev)
+
+        # Defining number of columns
+        treev["columns"] = ("name",)
+
+        # Defining heading
+        treev['show'] = 'headings'
+        treev.heading("name", text="Supported Games")
+
+        # List save games
+        treev = ttk.Treeview(root,
+                             selectmode='browse'
+                             # bg="grey",
+                             # activestyle='dotbox'
+                             )
+        self.save_games = treev
+
+        saves_sb = add_scrollbar(treev)
+
+        # Defining number of columns
+        treev["columns"] = ("name", "time")
+
+        # Defining heading
+        treev['show'] = 'headings'
+        treev.heading("name", text="Save games")
+        treev.heading("time", text="Time")
+
+        # Do the layout per this great documentation: https://tkdocs.com/tutorial/grid.html
+
+        self.supported_games.grid(row=0, column=0, sticky=(N, S, W), rowspan=2)
+        games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=2)
+
+        self.save_games.grid(row=0, column=3, sticky=(N, S, E), rowspan=1)
+        saves_sb.grid(row=0, column=4, sticky=(N, S), rowspan=1)
+
+        self.status.grid(row=2, sticky=(W, E))
+
+        root.rowconfigure(0, weight=1)
+
+        # grow the currently empty middle space
+        root.columnconfigure(0, weight=1)
+        root.columnconfigure(2, weight=1)
+        root.columnconfigure(3, weight=1)
 
     async def find_supported(self):
         all_games = self.engine.find_all_game_info()
-        print(f'All installed games: ')
         for i in all_games:
             print(f'  {i}')
 
-        # Test find_supported
         supported = await self.engine.find_supported(all_games)
-        print(f'Supported games: ')
-        for i, g in enumerate(supported):
-            print(f'  {i} {g}')
-            self.supported_games.insert(i, g["game_name"])
+        tree = self.supported_games
+        # put all children into the args of this function call
+        tree.delete(*tree.get_children())
+        for g in supported:
+            tree.insert(
+                "", END, values=(g["game_name"], ))
+
+    async def find_savegames(self):
+        saveinfos = await self.engine.get_saveinfos()
+
+        # put all children into the args of this function call
+        tree = self.save_games
+        tree.delete(*tree.get_children())
+        for g in saveinfos:
+            print(f'  {g}')
+            tree.insert(
+                "", END, values=(g["game_info"]["game_name"], ))
+
+    """Look for steam changes, and then queue up looking again"""
+    async def watch_steam(self):
+        # self.engine.ignore_unchanged = False  # for testing
+        backups = await self.watcher.check_once()
+
+        if (len(backups) > 0):
+            si = backups[0]  # only print for first one (the common case)
+            new_text = f'Snapshot taken for { si["game_info"]["game_name"] } at FIXME'
+            await self.find_savegames()
+            self.status.config(text=new_text)
+
+        # Our run is exiting, but queue one for the future
+        quitting = False
+        if not quitting:
+            await asyncio.sleep(5)
+            asyncio.create_task(self.watch_steam())
 
     async def async_main_loop(self):
         # do this in the background - update gui when done
         asyncio.create_task(self.find_supported())
+        asyncio.create_task(self.find_savegames())
+        asyncio.create_task(self.watch_steam())
 
-        await main_loop(self.master)
+        await main_loop(self.root)
 
-    def greet(self):
-        print("Greetings!")
 
 """
     def cycle_label_text(self, event):
@@ -74,9 +173,10 @@ class GUI:
         self.label_text.set(self.LABEL_TEXT[self.label_index])
 """
 
+
 def run(e: Engine):
 
-    root = tkinter.Tk()
+    root = Tk()
 
     # to make tk less ugly https://www.reddit.com/r/Python/comments/lps11c/how_to_make_tkinter_look_modern_how_to_use_themes/
     # style = Style(root)
@@ -87,4 +187,5 @@ def run(e: Engine):
     g = GUI(root, e)
     # async_mainloop(root)
 
-    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(g.async_main_loop())
+    asyncio.get_event_loop_policy().get_event_loop(
+    ).run_until_complete(g.async_main_loop())

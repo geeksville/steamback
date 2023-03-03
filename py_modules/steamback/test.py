@@ -13,20 +13,15 @@ async def testImpl(p: Engine):
     # print(f'Initial saveinfos { await p.get_saveinfos() }')
     p.ignore_unchanged = False  # Force backup for testing
 
-    all_games = p.find_all_game_info()
-    print(f'All installed games: ')
-    for i in all_games:
-        print(f'  {i}')
-
     # Test find_supported
-    supported = await p.find_supported(all_games)
+    supported = await p.find_supported(p.all_games)
     print(f'Supported games: ')
     for i in supported:
         print(f'  {i}')
 
-    valheim = make_game_info(p, 892970, "Valheim")
-    subnautica = make_game_info(p, 264710, "Subnautica")
-    subnauticabz = make_game_info(p, 848450, "Subnautica Below Zero")
+    valheim = make_game_info(p, 892970)
+    subnautica = make_game_info(p, 264710)
+    subnauticabz = make_game_info(p, 848450)
     mindustry = make_game_info(p, 1127400)
     # shapez = make_game_info(p,1318690)
     timberborn = make_game_info(p, 1062090)
@@ -50,8 +45,8 @@ async def testImpl(p: Engine):
 
     # cloud backups seem broken in general for this app
     # si = await p.do_backup(shapez)
-    #print(f'shapez backup results: { si }')
-    #assert si is not None
+    # print(f'shapez backup results: { si }')
+    # assert si is not None
 
     si = await p.do_backup(mindustry)
     print(f'mindustry backup results: { si }')
@@ -70,7 +65,7 @@ async def testImpl(p: Engine):
     assert si is not None
 
     # Test a game with formerly unsupported vdf (raft)
-    si = await p.do_backup(make_game_info(p, 648800, "Raft"))
+    si = await p.do_backup(make_game_info(p, 648800))
     assert si is not None
 
     p.ignore_unchanged = True  # following backup should be skipped because no changes

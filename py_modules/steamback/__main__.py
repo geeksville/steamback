@@ -41,12 +41,19 @@ def main():
     e = Engine(config)
     e.auto_set_account_id()
 
+    all_games = e.find_all_game_info()
+    print(f'All installed games: ')
+    for i in all_games:
+        print(f'  {i}')
+
     if args.test:
         asyncio.run(test.testImpl(e))
     elif args.daemon:
-        asyncio.run(util.backup_daemon(e))
+        d = util.SteamWatcher(e)
+        asyncio.run(d.run_forever())
     else:
         gui.run(e)
+
 
 if __name__ == "__main__":
     main()

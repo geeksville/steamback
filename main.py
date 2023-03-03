@@ -18,6 +18,7 @@ logger = decky_plugin.logger
 
 pinstance = None
 
+
 def get_engine() -> object:
     # we change logging levels late because if done too early it has no effect
     logger.setLevel(logging.DEBUG)
@@ -37,7 +38,7 @@ class Plugin:
     async def set_account_id(self, id_num: int):
         # logger.info(f'Setting account id { id_num }')
         get_engine().set_account_id(id_num)
-        return None # Must return something to prevent assertion error logspam in JS
+        return None  # Must return something to prevent assertion error logspam in JS
 
     """
     Backup a particular game.
