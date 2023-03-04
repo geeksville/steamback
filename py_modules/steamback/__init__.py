@@ -56,6 +56,7 @@ class Engine:
         self.all_games = None
         self.account_id = 0
         self.dry_run = False  # Set to true to suppress 'real' writes to directories
+        self.max_saves = 10  # default to a max of ten saves
 
         # don't generate backups if the files haven't changed since last backup
         self.ignore_unchanged = True
@@ -515,7 +516,7 @@ class Engine:
                 self._delete_savedir(todel["filename"])
 
         delete_oldest(undos, 1)
-        delete_oldest(saves, 10)
+        delete_oldest(saves, self.max_saves)
 
     """
     Given a save_info return a full pathname to that directory

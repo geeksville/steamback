@@ -65,6 +65,7 @@ def main():
     config = Config(logger, app_dir, steam_dir)
     e = Engine(config)
     e.auto_set_account_id()
+    e.max_saves = 50  # On desktop UIs we can show many more saves than 10
 
     all_games = e.find_all_game_info()
     # print(f'All installed games: ')
