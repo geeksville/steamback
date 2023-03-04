@@ -152,7 +152,11 @@ class GUI:
                 "", END, values=(g["game_name"], ))
 
     async def find_savegames(self):
-        saveinfos = await self.engine.get_saveinfos()
+        all_saves = await self.engine.get_saveinfos()
+
+        # Don't list any undos in the tree view
+        saveinfos = list(filter(lambda i: not i["is_undo"], all_saves))
+        undos = list(filter(lambda i: i["is_undo"], all_saves))
 
         # put all children into the args of this function call
         tree = self.save_games
