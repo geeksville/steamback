@@ -19,6 +19,8 @@ fix assets in pypi https://docs.python.org/2/distutils/setupscript.html#installi
 
 announce to https://defcon.social/@gamingonlinux@mastodon.social
 
+cleanup version finding https://packaging.python.org/en/latest/guides/single-sourcing-package-version/
+
 ## JS todo
 
 fix game infos

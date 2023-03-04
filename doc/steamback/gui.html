@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>steamback.gui API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>steamback.gui</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">#!python3
+
+
+from tkinter import *
+from tkinter import ttk
+import sv_ttk
+import datetime
+import timeago
+import os
+from async_tkinter_loop import async_handler
+import asyncio
+from . import Engine, util
+
+logger = None
+
+
+def add_scrollbar(view: ttk.Treeview) -&gt; ttk.Scrollbar:
+    root = view.master
+    b = ttk.Scrollbar(root,
+                      orient=&#34;vertical&#34;,
+                      command=view.yview)
+
+    # Configuring treeview
+    view.configure(yscrollcommand=b.set)
+
+    return b
+
+
+async def main_loop(root: Tk) -&gt; None:
+    &#34;&#34;&#34;
+    An asynchronous implementation of tkinter mainloop
+    :param root: tkinter root object
+    :return: nothing
+    &#34;&#34;&#34;
+    while True:
+        try:
+            root.winfo_exists()  # Will throw TclError if the main window is destroyed
+            root.update()
+        except TclError:
+            break
+
+        await asyncio.sleep(0.1)
+
+
+class GUI:
+
+    def __init__(self, root: Tk, e: Engine):
+        self.root = root
+        self.engine = e
+        self.watcher = util.SteamWatcher(e)
+
+        self.set_app_icon()
+
+        root.title(&#34;Steamback&#34;)
+        root.resizable(width=300, height=200)
+
+        &#34;&#34;&#34; self.label_index = 0
+        self.label_text = StringVar()
+        self.label_text.set(self.LABEL_TEXT[self.label_index])
+        self.label = Label(root, textvariable=self.label_text)
+        self.label.bind(&#34;&lt;Button-1&gt;&#34;, self.cycle_label_text)
+        self.label.pack() &#34;&#34;&#34;
+
+        # self.greet_button = ttk.Button(root, text=&#34;Greet&#34;, command=self.greet)
+        # self.greet_button.pack()
+
+        # self.close_button = ttk.Button(root, text=&#34;Close&#34;, command=root.quit)
+        # self.close_button.pack()
+
+        # Define a label for the list.
+        self.status = ttk.Label(
+            root, text=&#34;Status: Watching Steam for game exit...&#34;)
+
+        # List supported games
+        treev = ttk.Treeview(root,
+                             selectmode=&#39;browse&#39;
+                             # bg=&#34;grey&#34;,
+                             # activestyle=&#39;dotbox&#39;
+                             )
+        self.supported_games = treev
+
+        s_sb = add_scrollbar(treev)
+
+        # Defining number of columns
+        treev[&#34;columns&#34;] = (&#34;name&#34;,)
+
+        # Defining heading
+        treev[&#39;show&#39;] = &#39;headings&#39;
+        treev.heading(&#34;name&#34;, text=&#34;Supported Games&#34;)
+
+        # List supported games
+        treev = ttk.Treeview(root,
+                             selectmode=&#39;none&#39;
+                             # bg=&#34;grey&#34;,
+                             # activestyle=&#39;dotbox&#39;
+                             )
+        self.supported_games = treev
+
+        games_sb = add_scrollbar(treev)
+
+        # Defining number of columns
+        treev[&#34;columns&#34;] = (&#34;name&#34;,)
+
+        # Defining heading
+        treev[&#39;show&#39;] = &#39;headings&#39;
+        treev.heading(&#34;name&#34;, text=&#34;Supported Games&#34;)
+
+        # List save games
+        treev = ttk.Treeview(root,
+                             selectmode=&#39;browse&#39;
+                             # bg=&#34;grey&#34;,
+                             # activestyle=&#39;dotbox&#39;
+                             )
+        self.save_games = treev
+
+        saves_sb = add_scrollbar(treev)
+
+        # Defining number of columns
+        treev[&#34;columns&#34;] = (&#34;name&#34;, &#34;time&#34;)
+
+        # Defining heading
+        treev[&#39;show&#39;] = &#39;headings&#39;
+        treev.heading(&#34;name&#34;, text=&#34;Save games&#34;)
+        treev.heading(&#34;time&#34;, text=&#34;Time&#34;)
+
+        # Do the layout per this great documentation: https://tkdocs.com/tutorial/grid.html
+
+        self.supported_games.grid(row=0, column=0, sticky=(N, S, W), rowspan=2)
+        games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=2)
+
+        self.save_games.grid(row=0, column=3, sticky=(N, S, E), rowspan=1)
+        saves_sb.grid(row=0, column=4, sticky=(N, S), rowspan=1)
+
+        self.status.grid(row=2, sticky=(W, E))
+
+        root.rowconfigure(0, weight=1)
+
+        # grow the currently empty middle space
+        root.columnconfigure(0, weight=1)
+        root.columnconfigure(2, weight=1)
+        root.columnconfigure(3, weight=1)
+
+    async def find_supported(self):
+        all_games = self.engine.find_all_game_info()
+
+        supported = await self.engine.find_supported(all_games)
+        tree = self.supported_games
+        # put all children into the args of this function call
+        tree.delete(*tree.get_children())
+        for g in supported:
+            tree.insert(
+                &#34;&#34;, END, values=(g[&#34;game_name&#34;], ))
+
+    async def find_savegames(self):
+        all_saves = await self.engine.get_saveinfos()
+
+        # Don&#39;t list any undos in the tree view
+        saveinfos = list(filter(lambda i: not i[&#34;is_undo&#34;], all_saves))
+        undos = list(filter(lambda i: i[&#34;is_undo&#34;], all_saves))
+
+        # put all children into the args of this function call
+        tree = self.save_games
+        tree.delete(*tree.get_children())
+        for g in saveinfos:
+            # print(f&#39;  {g}&#39;)
+
+            # our timestamps are in msecs
+            now = datetime.datetime.now()
+            ts = datetime.datetime.fromtimestamp(g[&#34;timestamp&#34;] / 1000.0)
+            ts_str = timeago.format(ts, now)
+
+            tree.insert(
+                &#34;&#34;, END, values=(g[&#34;game_info&#34;][&#34;game_name&#34;], ts_str))
+
+    &#34;&#34;&#34;Look for steam changes, and then queue up looking again&#34;&#34;&#34;
+    async def watch_steam(self):
+        # self.engine.ignore_unchanged = False  # for testing
+        backups = await self.watcher.check_once()
+
+        if (len(backups) &gt; 0):
+            si = backups[0]  # only print for first one (the common case)
+            new_text = f&#39;Snapshot taken for { si[&#34;game_info&#34;][&#34;game_name&#34;] } at FIXME&#39;
+            await self.find_savegames()
+            self.status.config(text=new_text)
+
+        # Our run is exiting, but queue one for the future
+        quitting = False
+        if not quitting:
+            await asyncio.sleep(5)
+            asyncio.create_task(self.watch_steam())
+
+    async def async_main_loop(self):
+        # do this in the background - update gui when done
+        asyncio.create_task(self.find_supported())
+        asyncio.create_task(self.find_savegames())
+        asyncio.create_task(self.watch_steam())
+
+        await main_loop(self.root)
+
+    &#34;&#34;&#34;Set the icon for our app in GUI&#34;&#34;&#34;
+
+    def set_app_icon(self):
+        # might be missing on some systems so use a try catch and do the imports here
+        try:
+            from PIL import Image, ImageTk
+            with Image.open(os.path.join(os.path.dirname(
+                    __file__),  &#39;data&#39;, &#39;icons8-refresh-96.png&#39;)) as ico:
+                photo = ImageTk.PhotoImage(ico)
+                self.root.wm_iconphoto(True, photo)
+        except Exception as e:
+            logger.warning(
+                f&#39;Can\&#39;t set application icon due to missing library: {e}&#39;)
+
+
+&#34;&#34;&#34;
+    def cycle_label_text(self, event):
+        self.label_index += 1
+        self.label_index %= len(self.LABEL_TEXT)  # wrap around
+        self.label_text.set(self.LABEL_TEXT[self.label_index])
+&#34;&#34;&#34;
+
+
+def run(e: Engine):
+    global logger
+    logger = e.config.logger
+
+    root = Tk()
+
+    # to make tk less ugly https://www.reddit.com/r/Python/comments/lps11c/how_to_make_tkinter_look_modern_how_to_use_themes/
+    # style = Style(root)
+    # Set the theme with the theme_use method
+    # style.theme_use(&#39;clam&#39;)  # put the theme name here, that you want to use
+    sv_ttk.set_theme(&#34;dark&#34;)
+
+    g = GUI(root, e)
+    # async_mainloop(root)
+
+    asyncio.get_event_loop_policy().get_event_loop(
+    ).run_until_complete(g.async_main_loop())</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="steamback.gui.add_scrollbar"><code class="name flex">
+<span>def <span class="ident">add_scrollbar</span></span>(<span>view: tkinter.ttk.Treeview) ‑> tkinter.ttk.Scrollbar</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_scrollbar(view: ttk.Treeview) -&gt; ttk.Scrollbar:
+    root = view.master
+    b = ttk.Scrollbar(root,
+                      orient=&#34;vertical&#34;,
+                      command=view.yview)
+
+    # Configuring treeview
+    view.configure(yscrollcommand=b.set)
+
+    return b</code></pre>
+</details>
+</dd>
+<dt id="steamback.gui.main_loop"><code class="name flex">
+<span>async def <span class="ident">main_loop</span></span>(<span>root: tkinter.Tk) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An asynchronous implementation of tkinter mainloop
+:param root: tkinter root object
+:return: nothing</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def main_loop(root: Tk) -&gt; None:
+    &#34;&#34;&#34;
+    An asynchronous implementation of tkinter mainloop
+    :param root: tkinter root object
+    :return: nothing
+    &#34;&#34;&#34;
+    while True:
+        try:
+            root.winfo_exists()  # Will throw TclError if the main window is destroyed
+            root.update()
+        except TclError:
+            break
+
+        await asyncio.sleep(0.1)</code></pre>
+</details>
+</dd>
+<dt id="steamback.gui.run"><code class="name flex">
+<span>def <span class="ident">run</span></span>(<span>e: <a title="steamback.Engine" href="index.html#steamback.Engine">Engine</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run(e: Engine):
+    global logger
+    logger = e.config.logger
+
+    root = Tk()
+
+    # to make tk less ugly https://www.reddit.com/r/Python/comments/lps11c/how_to_make_tkinter_look_modern_how_to_use_themes/
+    # style = Style(root)
+    # Set the theme with the theme_use method
+    # style.theme_use(&#39;clam&#39;)  # put the theme name here, that you want to use
+    sv_ttk.set_theme(&#34;dark&#34;)
+
+    g = GUI(root, e)
+    # async_mainloop(root)
+
+    asyncio.get_event_loop_policy().get_event_loop(
+    ).run_until_complete(g.async_main_loop())</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="steamback.gui.GUI"><code class="flex name class">
+<span>class <span class="ident">GUI</span></span>
+<span>(</span><span>root: tkinter.Tk, e: <a title="steamback.Engine" href="index.html#steamback.Engine">Engine</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class GUI:
+
+    def __init__(self, root: Tk, e: Engine):
+        self.root = root
+        self.engine = e
+        self.watcher = util.SteamWatcher(e)
+
+        self.set_app_icon()
+
+        root.title(&#34;Steamback&#34;)
+        root.resizable(width=300, height=200)
+
+        &#34;&#34;&#34; self.label_index = 0
+        self.label_text = StringVar()
+        self.label_text.set(self.LABEL_TEXT[self.label_index])
+        self.label = Label(root, textvariable=self.label_text)
+        self.label.bind(&#34;&lt;Button-1&gt;&#34;, self.cycle_label_text)
+        self.label.pack() &#34;&#34;&#34;
+
+        # self.greet_button = ttk.Button(root, text=&#34;Greet&#34;, command=self.greet)
+        # self.greet_button.pack()
+
+        # self.close_button = ttk.Button(root, text=&#34;Close&#34;, command=root.quit)
+        # self.close_button.pack()
+
+        # Define a label for the list.
+        self.status = ttk.Label(
+            root, text=&#34;Status: Watching Steam for game exit...&#34;)
+
+        # List supported games
+        treev = ttk.Treeview(root,
+                             selectmode=&#39;browse&#39;
+                             # bg=&#34;grey&#34;,
+                             # activestyle=&#39;dotbox&#39;
+                             )
+        self.supported_games = treev
+
+        s_sb = add_scrollbar(treev)
+
+        # Defining number of columns
+        treev[&#34;columns&#34;] = (&#34;name&#34;,)
+
+        # Defining heading
+        treev[&#39;show&#39;] = &#39;headings&#39;
+        treev.heading(&#34;name&#34;, text=&#34;Supported Games&#34;)
+
+        # List supported games
+        treev = ttk.Treeview(root,
+                             selectmode=&#39;none&#39;
+                             # bg=&#34;grey&#34;,
+                             # activestyle=&#39;dotbox&#39;
+                             )
+        self.supported_games = treev
+
+        games_sb = add_scrollbar(treev)
+
+        # Defining number of columns
+        treev[&#34;columns&#34;] = (&#34;name&#34;,)
+
+        # Defining heading
+        treev[&#39;show&#39;] = &#39;headings&#39;
+        treev.heading(&#34;name&#34;, text=&#34;Supported Games&#34;)
+
+        # List save games
+        treev = ttk.Treeview(root,
+                             selectmode=&#39;browse&#39;
+                             # bg=&#34;grey&#34;,
+                             # activestyle=&#39;dotbox&#39;
+                             )
+        self.save_games = treev
+
+        saves_sb = add_scrollbar(treev)
+
+        # Defining number of columns
+        treev[&#34;columns&#34;] = (&#34;name&#34;, &#34;time&#34;)
+
+        # Defining heading
+        treev[&#39;show&#39;] = &#39;headings&#39;
+        treev.heading(&#34;name&#34;, text=&#34;Save games&#34;)
+        treev.heading(&#34;time&#34;, text=&#34;Time&#34;)
+
+        # Do the layout per this great documentation: https://tkdocs.com/tutorial/grid.html
+
+        self.supported_games.grid(row=0, column=0, sticky=(N, S, W), rowspan=2)
+        games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=2)
+
+        self.save_games.grid(row=0, column=3, sticky=(N, S, E), rowspan=1)
+        saves_sb.grid(row=0, column=4, sticky=(N, S), rowspan=1)
+
+        self.status.grid(row=2, sticky=(W, E))
+
+        root.rowconfigure(0, weight=1)
+
+        # grow the currently empty middle space
+        root.columnconfigure(0, weight=1)
+        root.columnconfigure(2, weight=1)
+        root.columnconfigure(3, weight=1)
+
+    async def find_supported(self):
+        all_games = self.engine.find_all_game_info()
+
+        supported = await self.engine.find_supported(all_games)
+        tree = self.supported_games
+        # put all children into the args of this function call
+        tree.delete(*tree.get_children())
+        for g in supported:
+            tree.insert(
+                &#34;&#34;, END, values=(g[&#34;game_name&#34;], ))
+
+    async def find_savegames(self):
+        all_saves = await self.engine.get_saveinfos()
+
+        # Don&#39;t list any undos in the tree view
+        saveinfos = list(filter(lambda i: not i[&#34;is_undo&#34;], all_saves))
+        undos = list(filter(lambda i: i[&#34;is_undo&#34;], all_saves))
+
+        # put all children into the args of this function call
+        tree = self.save_games
+        tree.delete(*tree.get_children())
+        for g in saveinfos:
+            # print(f&#39;  {g}&#39;)
+
+            # our timestamps are in msecs
+            now = datetime.datetime.now()
+            ts = datetime.datetime.fromtimestamp(g[&#34;timestamp&#34;] / 1000.0)
+            ts_str = timeago.format(ts, now)
+
+            tree.insert(
+                &#34;&#34;, END, values=(g[&#34;game_info&#34;][&#34;game_name&#34;], ts_str))
+
+    &#34;&#34;&#34;Look for steam changes, and then queue up looking again&#34;&#34;&#34;
+    async def watch_steam(self):
+        # self.engine.ignore_unchanged = False  # for testing
+        backups = await self.watcher.check_once()
+
+        if (len(backups) &gt; 0):
+            si = backups[0]  # only print for first one (the common case)
+            new_text = f&#39;Snapshot taken for { si[&#34;game_info&#34;][&#34;game_name&#34;] } at FIXME&#39;
+            await self.find_savegames()
+            self.status.config(text=new_text)
+
+        # Our run is exiting, but queue one for the future
+        quitting = False
+        if not quitting:
+            await asyncio.sleep(5)
+            asyncio.create_task(self.watch_steam())
+
+    async def async_main_loop(self):
+        # do this in the background - update gui when done
+        asyncio.create_task(self.find_supported())
+        asyncio.create_task(self.find_savegames())
+        asyncio.create_task(self.watch_steam())
+
+        await main_loop(self.root)
+
+    &#34;&#34;&#34;Set the icon for our app in GUI&#34;&#34;&#34;
+
+    def set_app_icon(self):
+        # might be missing on some systems so use a try catch and do the imports here
+        try:
+            from PIL import Image, ImageTk
+            with Image.open(os.path.join(os.path.dirname(
+                    __file__),  &#39;data&#39;, &#39;icons8-refresh-96.png&#39;)) as ico:
+                photo = ImageTk.PhotoImage(ico)
+                self.root.wm_iconphoto(True, photo)
+        except Exception as e:
+            logger.warning(
+                f&#39;Can\&#39;t set application icon due to missing library: {e}&#39;)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="steamback.gui.GUI.async_main_loop"><code class="name flex">
+<span>async def <span class="ident">async_main_loop</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def async_main_loop(self):
+    # do this in the background - update gui when done
+    asyncio.create_task(self.find_supported())
+    asyncio.create_task(self.find_savegames())
+    asyncio.create_task(self.watch_steam())
+
+    await main_loop(self.root)</code></pre>
+</details>
+</dd>
+<dt id="steamback.gui.GUI.find_savegames"><code class="name flex">
+<span>async def <span class="ident">find_savegames</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def find_savegames(self):
+    all_saves = await self.engine.get_saveinfos()
+
+    # Don&#39;t list any undos in the tree view
+    saveinfos = list(filter(lambda i: not i[&#34;is_undo&#34;], all_saves))
+    undos = list(filter(lambda i: i[&#34;is_undo&#34;], all_saves))
+
+    # put all children into the args of this function call
+    tree = self.save_games
+    tree.delete(*tree.get_children())
+    for g in saveinfos:
+        # print(f&#39;  {g}&#39;)
+
+        # our timestamps are in msecs
+        now = datetime.datetime.now()
+        ts = datetime.datetime.fromtimestamp(g[&#34;timestamp&#34;] / 1000.0)
+        ts_str = timeago.format(ts, now)
+
+        tree.insert(
+            &#34;&#34;, END, values=(g[&#34;game_info&#34;][&#34;game_name&#34;], ts_str))</code></pre>
+</details>
+</dd>
+<dt id="steamback.gui.GUI.find_supported"><code class="name flex">
+<span>async def <span class="ident">find_supported</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def find_supported(self):
+    all_games = self.engine.find_all_game_info()
+
+    supported = await self.engine.find_supported(all_games)
+    tree = self.supported_games
+    # put all children into the args of this function call
+    tree.delete(*tree.get_children())
+    for g in supported:
+        tree.insert(
+            &#34;&#34;, END, values=(g[&#34;game_name&#34;], ))</code></pre>
+</details>
+</dd>
+<dt id="steamback.gui.GUI.set_app_icon"><code class="name flex">
+<span>def <span class="ident">set_app_icon</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_app_icon(self):
+    # might be missing on some systems so use a try catch and do the imports here
+    try:
+        from PIL import Image, ImageTk
+        with Image.open(os.path.join(os.path.dirname(
+                __file__),  &#39;data&#39;, &#39;icons8-refresh-96.png&#39;)) as ico:
+            photo = ImageTk.PhotoImage(ico)
+            self.root.wm_iconphoto(True, photo)
+    except Exception as e:
+        logger.warning(
+            f&#39;Can\&#39;t set application icon due to missing library: {e}&#39;)</code></pre>
+</details>
+</dd>
+<dt id="steamback.gui.GUI.watch_steam"><code class="name flex">
+<span>async def <span class="ident">watch_steam</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def watch_steam(self):
+    # self.engine.ignore_unchanged = False  # for testing
+    backups = await self.watcher.check_once()
+
+    if (len(backups) &gt; 0):
+        si = backups[0]  # only print for first one (the common case)
+        new_text = f&#39;Snapshot taken for { si[&#34;game_info&#34;][&#34;game_name&#34;] } at FIXME&#39;
+        await self.find_savegames()
+        self.status.config(text=new_text)
+
+    # Our run is exiting, but queue one for the future
+    quitting = False
+    if not quitting:
+        await asyncio.sleep(5)
+        asyncio.create_task(self.watch_steam())</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="steamback" href="index.html">steamback</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="steamback.gui.add_scrollbar" href="#steamback.gui.add_scrollbar">add_scrollbar</a></code></li>
+<li><code><a title="steamback.gui.main_loop" href="#steamback.gui.main_loop">main_loop</a></code></li>
+<li><code><a title="steamback.gui.run" href="#steamback.gui.run">run</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="steamback.gui.GUI" href="#steamback.gui.GUI">GUI</a></code></h4>
+<ul class="">
+<li><code><a title="steamback.gui.GUI.async_main_loop" href="#steamback.gui.GUI.async_main_loop">async_main_loop</a></code></li>
+<li><code><a title="steamback.gui.GUI.find_savegames" href="#steamback.gui.GUI.find_savegames">find_savegames</a></code></li>
+<li><code><a title="steamback.gui.GUI.find_supported" href="#steamback.gui.GUI.find_supported">find_supported</a></code></li>
+<li><code><a title="steamback.gui.GUI.set_app_icon" href="#steamback.gui.GUI.set_app_icon">set_app_icon</a></code></li>
+<li><code><a title="steamback.gui.GUI.watch_steam" href="#steamback.gui.GUI.watch_steam">watch_steam</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

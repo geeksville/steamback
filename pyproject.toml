@@ -1,10 +1,6 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "steamback"
-version = "0.3.0"
+version = "0.3.1"
 authors = [
   { name="Kevin Hester", email="kevinh@geeksville.com" },
 ]
@@ -19,12 +15,23 @@ classifiers = [
 dependencies = [
     "platformdirs ~= 3.1.0",
     "psutil ~= 5.9.1",
-    "async-tkinter-loop ~= 3.4.3",
+    "async-tkinter-loop ~= 0.7.0",
     "sv-ttk ~= 2.4",
     "timeago ~= 1.0.16",
     "Pillow ~= 9.2.0"
 ]
 
+[tool.setuptools.packages.find]
+where = ["py_modules"]  # list of folders that contain the packages (["."] by default)
+include = ["steamback*"]  # package names should match these glob patterns (["*"] by default)
+
+[project.scripts]
+steamback = "steamback.__main__:main"
+
 [project.urls]
 "Homepage" = "https://github.com/geeksville/steamback"
 "Bug Tracker" = "https://github.com/geeksville/steamback/issues"
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"

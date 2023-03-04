@@ -20,7 +20,7 @@ def make_game_info(p: Engine, game_id: int) -> dict:
             "game_id": game_id,
             "game_name": None
         }
-        
+
     return info
 
 
@@ -83,6 +83,8 @@ class SteamWatcher:
         return backups
 
     async def run_forever(self):
+        self.engine.logger.info(
+            "Watching Steam for game exit, press Ctrl-C to quit...")
         while True:
             await asyncio.sleep(5)
             await self.check_once()
