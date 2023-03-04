@@ -14,7 +14,7 @@ async def testImpl(p: Engine):
     p.ignore_unchanged = False  # Force backup for testing
 
     # Test find_supported
-    supported = await p.find_supported(p.all_games)
+    supported = await p.find_supported(p.all_games.values())
     print(f'Supported games: ')
     for i in supported:
         print(f'  {i}')
