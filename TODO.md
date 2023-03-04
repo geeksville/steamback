@@ -15,6 +15,10 @@ gui in tk https://stackoverflow.com/questions/24656138/python-tkinter-attach-scr
 
 use async tkinker https://pypi.org/project/async-tkinter-loop/
 
+fix assets in pypi https://docs.python.org/2/distutils/setupscript.html#installing-package-data
+
+announce to https://defcon.social/@gamingonlinux@mastodon.social
+
 ## JS todo
 
 fix game infos

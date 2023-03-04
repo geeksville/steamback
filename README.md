@@ -45,6 +45,9 @@ The plugin will automatically take snapshots **whenever you exit a supported gam
 
 If you ever want to rewind to a particular snapshot, just click the ... button, go to decky/steamback and select which snapshot you want to rewind to.
 
-# License
+# License & credits
 
-Steamback is copyright 2022 Geeksville Industries, LLC.  It is open-source (GPL v3 licensed) and we welcome collaboration on our github. 
+Steamback is Copyright 2022 Geeksville Industries, LLC.  It is open-source (GPL v3 licensed) and we welcome collaboration on our github. 
+
+The application icon when running on desktop computers is [by Icons8](https://icons8.com/icon/J6Lv30IPIWZI/refresh) and used per their terms of use.
+

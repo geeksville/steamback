@@ -42,9 +42,9 @@ def main():
     e.auto_set_account_id()
 
     all_games = e.find_all_game_info()
-    print(f'All installed games: ')
-    for i in all_games:
-        print(f'  {i}')
+    # print(f'All installed games: ')
+    # for i in all_games:
+    #    print(f'  {i}')
 
     if args.test:
         asyncio.run(test.testImpl(e))

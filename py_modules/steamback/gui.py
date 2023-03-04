@@ -6,9 +6,12 @@ from tkinter import ttk
 import sv_ttk
 import datetime
 import timeago
+import os
 from async_tkinter_loop import async_handler
 import asyncio
 from . import Engine, util
+
+logger = None
 
 
 def add_scrollbar(view: ttk.Treeview) -> ttk.Scrollbar:
@@ -45,6 +48,9 @@ class GUI:
         self.root = root
         self.engine = e
         self.watcher = util.SteamWatcher(e)
+
+        self.set_app_icon()
+
         root.title("Steamback")
         root.resizable(width=300, height=200)
 
@@ -187,6 +193,20 @@ class GUI:
 
         await main_loop(self.root)
 
+    """Set the icon for our app in GUI"""
+
+    def set_app_icon(self):
+        # might be missing on some systems so use a try catch and do the imports here
+        try:
+            from PIL import Image, ImageTk
+            with Image.open(os.path.join(os.path.dirname(
+                    __file__),  'data', 'icons8-refresh-96.png')) as ico:
+                photo = ImageTk.PhotoImage(ico)
+                self.root.wm_iconphoto(True, photo)
+        except Exception as e:
+            logger.warn(
+                f'Can\'t set application icon due to missing library: {e}')
+
 
 """
     def cycle_label_text(self, event):
@@ -197,6 +217,8 @@ class GUI:
 
 
 def run(e: Engine):
+    global logger
+    logger = e.config.logger
 
     root = Tk()
 

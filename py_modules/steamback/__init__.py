@@ -73,8 +73,8 @@ class Engine:
     def auto_set_account_id(self) -> int:
         files = os.listdir(os.path.join(self.get_steam_root(), "userdata"))
         ids = list(filter(lambda i: i is not None, map(
-            lambda f: int(f) if f.isnumeric() else None, files)))
-        assert len(files) == 1  # Is there exactly one account dir?
+            lambda f: int(f) if f.isnumeric() and f != "0" else None, files)))
+        assert len(ids) == 1  # Is there exactly one account dir?
         id = ids[0]
         self.set_account_id(id)
         return id
@@ -382,7 +382,7 @@ class Engine:
         # confirm that at least one savegame exists, to validate our assumptions about where they are being stored
         # if no savegame found claim we can't back this app up.
         if not self._rcf_is_valid(game_info["save_games_root"], rcf):
-            logger.warn(
+            logger.debug(
                 f'RCF seems invalid, not backing up { game_info }')
             return None
 
