@@ -47,8 +47,15 @@ def main():
         steam_dir = os.path.join(os.path.expanduser(
             "~"), "Library", "Application Support", "Steam")
     else:
-        steam_dir = os.path.join(os.path.expanduser(
+        steam_deck_dir = os.path.join(os.path.expanduser(
+            "~"), ".local", "share", "Steam")
+        steam_dir = steam_deck_dir if os.path.exists(steam_deck_dir) else os.path.join(os.path.expanduser(
             "~"), ".steam", "debian-installation")  # the default case
+
+    if not os.path.exists(steam_dir):
+        logger.error(
+            f'Can\'t find steam directory at { steam_dir }, exiting...')
+        return
 
     app_name = "steamback"
     app_author = "geeksville"
