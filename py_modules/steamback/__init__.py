@@ -177,7 +177,7 @@ class Engine:
             rootdir = os.path.join(steamApps, "common", installdir)
         else:
             rootdir = os.path.join(
-                steamApps, f'compatdata/{ game_info["game_id" ] }/pfx/drive_c/users/steamuser')
+                steamApps, 'compatdata', str(game_info["game_id"]), 'pfx', 'drive_c', 'users', 'steamuser')
 
         return rootdir
 
@@ -227,6 +227,8 @@ class Engine:
         # is a directory.  If we don't find such a slash, that means none of the backup files are using directories
         # and we should just use the existing autocloud dir.
         # FIXME what about paths where someone used / in the filename!
+        # NOTE: This has been confirmed to also work on Windows - on that platform also Valve uses / as the path
+        # separator.
         dirSplit = rPrefix.rfind('/')
         if dirSplit != -1:
             # throw away everything after the last slash (and the slash itself)
@@ -237,7 +239,8 @@ class Engine:
             if autoTail == rPrefix:
                 autocloud = autocloud[:-len(rPrefix)]
 
-        return autocloud
+        # possibly convert / to \ if necessary for windows
+        return os.path.normpath(autocloud)
 
     """
     Look in the likely locations for savegame files (per the rcf list). return that path or None
@@ -255,7 +258,7 @@ class Engine:
             r = self._get_game_saves_root(
                 game_info, is_linux_game=False, is_system_dir=is_system_dir)
             windowsRoots = ['Documents',
-                            'Application Data', 'AppData/LocalLow', 'Local Settings/Application Data']
+                            'Application Data', os.path.join('AppData', 'LocalLow'), os.path.join('Local Settings', 'Application Data')]
             for subdir in windowsRoots:
                 d = os.path.join(r, subdir)
                 roots.append(d)
@@ -282,7 +285,7 @@ class Engine:
 
         # First check to see if the game uses the 'new' "remote" directory approach to save files (i.e. they used the steam backup API from the app)
         fullRemotes = (os.path.join(d, x)
-                       for x in ["remote", "ac/LinuxXdgDataHome"])
+                       for x in ["remote", os.path.join("ac", "LinuxXdgDataHome")])
         remoteFound = next((x for x in fullRemotes if os.path.isdir(x)), None)
         if remoteFound:
             # Store the savegames directory for this game
