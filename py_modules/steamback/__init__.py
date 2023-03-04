@@ -373,7 +373,7 @@ class Engine:
         if not "save_games_root" in game_info:
             saveRoot = self._find_save_games(game_info, rcf)
             if not saveRoot:
-                logger.warn(
+                logger.warning(
                     f'Unable to backup { game_info }: not yet supported')
                 return None
             else:
@@ -430,7 +430,7 @@ class Engine:
                     os.makedirs(dir, exist_ok=True)
                     shutil.copy2(spath, dpath)
             else:
-                # logger.warn(f'Not copying missing file { k }')
+                # logger.warning(f'Not copying missing file { k }')
                 pass
         logger.info(
             f'Copied { numCopied } files from { src_dir } to { dest_dir }')
@@ -555,7 +555,7 @@ class Engine:
         if newest_save and self.ignore_unchanged:
             game_timestamp = self._get_rcf_timestamp(rcf, game_info)
             if newest_save["timestamp"] > game_timestamp:
-                logger.warn(
+                logger.warning(
                     f'Skipping backup for { game_id } - no changed files')
                 return None
 

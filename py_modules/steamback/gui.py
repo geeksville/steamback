@@ -204,7 +204,7 @@ class GUI:
                 photo = ImageTk.PhotoImage(ico)
                 self.root.wm_iconphoto(True, photo)
         except Exception as e:
-            logger.warn(
+            logger.warning(
                 f'Can\'t set application icon due to missing library: {e}')
 
 
