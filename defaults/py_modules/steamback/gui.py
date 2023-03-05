@@ -60,6 +60,24 @@ class GUI:
         root.title("Steamback")
         root.resizable(width=300, height=200)
 
+        """Save window position on exit"""
+
+        def on_close():
+            # Here I write the X Y position of the window to a file "myapp.conf"
+            with open(os.path.join(self.engine.config.app_data_dir, "window.conf"), "w") as conf:
+                conf.write(root.geometry())
+
+            root.destroy()
+
+        root.protocol("WM_DELETE_WINDOW", on_close)
+
+        # Here I read the X and Y positon of the window from when I last closed it.
+        try:
+            with open(os.path.join(self.engine.config.app_data_dir, "window.conf"), "r") as conf:
+                root.geometry(conf.read())
+        except e:
+            pass  # Ignore any errors (file might be missing etc)
+
         """ self.label_index = 0
         self.label_text = StringVar()
         self.label_text.set(self.LABEL_TEXT[self.label_index])
