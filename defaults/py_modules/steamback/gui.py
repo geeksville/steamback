@@ -107,7 +107,7 @@ class GUI:
         # self.close_button.pack()
 
         self.undo_button = ttk.Button(
-            root, text="Undo change to XXX", command=self.on_undo_click)
+            root, text="Undo changes to XXX", command=async_handler(self.on_undo_click))
         self.revert_button = ttk.Button(
             root, text="Revert XXX to save from 5 minutes ago", command=async_handler(self.on_revert_click))
 
@@ -211,20 +211,33 @@ class GUI:
 
             # do the restore
             si = self.saves[filename]
-            self.engine.dry_run = True  # FIXME - testing
+            # self.engine.dry_run = True  # FIXME - testing
             await self.engine.do_restore(si)
 
             # Set status msg
-            new_text = f'Reverted { si["game_info"]["game_name"] } from snapshot'
+            new_text = f'Reverted to { si["game_info"]["game_name"] } snapshot'
             self.set_status(new_text)
 
             # deselect the item the user just reverted
-            self.tree.selection_remove(item)
+            self.save_games.selection_remove(filename)
+            self.revert_button.grid_remove()
+
+            # We just generated an undo save, so update the list of savegames
+            await self.find_savegames()
 
     """User wants to undo our last revert"""
 
-    def on_undo_click(self):
-        pass
+    async def on_undo_click(self):
+        # do the restore
+        si = self.undo
+        assert si
+
+        # self.engine.dry_run = True  # FIXME - testing
+        await self.engine.do_restore(si)
+
+        # Set status msg
+        new_text = f'Undid changes to { si["game_info"]["game_name"] }'
+        self.set_status(new_text)
 
     async def find_supported(self):
         all_games = self.engine.find_all_game_info()
@@ -251,7 +264,7 @@ class GUI:
             g = undos[0]
             self.undo = g
             self.undo_button.config(
-                text=f'Undo change to { g["game_info"]["game_name"]}')
+                text=f'Undo changes to { g["game_info"]["game_name"]}')
             self.undo_button.grid()
 
         # fill the treeview
