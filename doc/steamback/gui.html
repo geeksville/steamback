@@ -60,14 +60,29 @@ async def main_loop(root: Tk) -&gt; None:
     :param root: tkinter root object
     :return: nothing
     &#34;&#34;&#34;
-    while True:
-        try:
-            root.winfo_exists()  # Will throw TclError if the main window is destroyed
-            root.update()
-        except TclError:
-            break
+    try:
+        while True:
+            try:
+                root.winfo_exists()  # Will throw TclError if the main window is destroyed
+                root.update()
+            except TclError:
+                break
 
-        await asyncio.sleep(0.1)
+            # Don&#39;t poll events quickly if not visible and not the focus of the user
+            # no longer checking root.state() == &#39;normal&#39;
+            interval = 0.05 if root.focus_displayof() else 0.5
+            await asyncio.sleep(interval)
+    except TclError as e:
+        if not &#34;application has been destroyed&#34; in str(e):
+            print(f&#39;Exiting due to { e }&#39;)
+
+
+def saveinfo_ago_str(si: dict) -&gt; str:
+    # our timestamps are in msecs
+    now = datetime.datetime.now()
+    ts = datetime.datetime.fromtimestamp(si[&#34;timestamp&#34;] / 1000.0)
+    ts_str = timeago.format(ts, now)
+    return ts_str
 
 
 class GUI:
@@ -77,10 +92,34 @@ class GUI:
         self.engine = e
         self.watcher = util.SteamWatcher(e)
 
+        # A dictionary mapping from saveinfo filename to saveinfo dictionary object
+        self.saves = None
+
+        # The saveinfo for the undo file
+        self.undo = None
+
         self.set_app_icon()
 
         root.title(&#34;Steamback&#34;)
-        root.resizable(width=300, height=200)
+        root.resizable(width=800, height=400)
+
+        &#34;&#34;&#34;Save window position on exit&#34;&#34;&#34;
+
+        def on_close():
+            # Here I write the X Y position of the window to a file &#34;myapp.conf&#34;
+            with open(os.path.join(self.engine.config.app_data_dir, &#34;window.conf&#34;), &#34;w&#34;) as conf:
+                conf.write(root.geometry())
+
+            root.destroy()
+
+        root.protocol(&#34;WM_DELETE_WINDOW&#34;, on_close)
+
+        # Here I read the X and Y positon of the window from when I last closed it.
+        try:
+            with open(os.path.join(self.engine.config.app_data_dir, &#34;window.conf&#34;), &#34;r&#34;) as conf:
+                root.geometry(conf.read())
+        except Exception:
+            pass  # Ignore any errors (file might be missing etc)
 
         &#34;&#34;&#34; self.label_index = 0
         self.label_text = StringVar()
@@ -94,6 +133,11 @@ class GUI:
 
         # self.close_button = ttk.Button(root, text=&#34;Close&#34;, command=root.quit)
         # self.close_button.pack()
+
+        self.undo_button = ttk.Button(
+            root, text=&#34;Undo changes to XXX&#34;, command=async_handler(self.on_undo_click))
+        self.revert_button = ttk.Button(
+            root, text=&#34;Revert XXX to save from 5 minutes ago&#34;, command=async_handler(self.on_revert_click))
 
         # Define a label for the list.
         self.status = ttk.Label(
@@ -133,6 +177,10 @@ class GUI:
         treev[&#39;show&#39;] = &#39;headings&#39;
         treev.heading(&#34;name&#34;, text=&#34;Supported Games&#34;)
 
+        char_width = 8
+        treev.column(&#34;name&#34;, minwidth=char_width * 10,
+                     width=char_width * 30, stretch=YES)
+
         # List save games
         treev = ttk.Treeview(root,
                              selectmode=&#39;browse&#39;
@@ -151,15 +199,29 @@ class GUI:
         treev.heading(&#34;name&#34;, text=&#34;Save games&#34;)
         treev.heading(&#34;time&#34;, text=&#34;Time&#34;)
 
+        treev.column(&#34;name&#34;, minwidth=char_width * 10,
+                     width=char_width * 30, stretch=YES)
+        treev.column(&#34;time&#34;, minwidth=char_width * 6,
+                     width=char_width * 15, stretch=NO)
+
+        treev.bind(&#34;&lt;&lt;TreeviewSelect&gt;&gt;&#34;, self.on_savegame_selected)
+
         # Do the layout per this great documentation: https://tkdocs.com/tutorial/grid.html
 
-        self.supported_games.grid(row=0, column=0, sticky=(N, S, W), rowspan=2)
-        games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=2)
+        self.supported_games.grid(
+            row=0, column=0, sticky=(N, S, W, E), rowspan=3)
+        games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=3)
 
-        self.save_games.grid(row=0, column=3, sticky=(N, S, E), rowspan=1)
+        self.save_games.grid(row=0, column=3, sticky=(N, S, E, W), rowspan=1)
         saves_sb.grid(row=0, column=4, sticky=(N, S), rowspan=1)
 
-        self.status.grid(row=2, sticky=(W, E))
+        # Position the various undo/revert buttons but hide them for now
+        self.undo_button.grid(row=1, column=3, padx=8, pady=8)
+        self.revert_button.grid(row=2, column=3, padx=8, pady=8)
+        self.undo_button.grid_remove()
+        self.revert_button.grid_remove()
+
+        self.status.grid(row=10, sticky=(W, E), padx=8, pady=8)
 
         root.rowconfigure(0, weight=1)
 
@@ -167,6 +229,53 @@ class GUI:
         root.columnconfigure(0, weight=1)
         root.columnconfigure(2, weight=1)
         root.columnconfigure(3, weight=1)
+
+    &#34;&#34;&#34;A savegame was selected in the treeview&#34;&#34;&#34;
+
+    def on_savegame_selected(self, event):
+        for filename in self.save_games.selection():
+            si = self.saves[filename]
+
+            # set revert button text
+            self.revert_button.config(
+                text=f&#39;Revert { si[&#34;game_info&#34;][&#34;game_name&#34;]} to save from { saveinfo_ago_str(si)}&#39;)
+
+            self.revert_button.grid()  # show revert button
+
+    &#34;&#34;&#34;user clicked to restore from a savegame&#34;&#34;&#34;
+
+    async def on_revert_click(self):
+        for filename in self.save_games.selection():
+
+            # do the restore
+            si = self.saves[filename]
+            # self.engine.dry_run = True  # FIXME - testing
+            await self.engine.do_restore(si)
+
+            # Set status msg
+            new_text = f&#39;Reverted to { si[&#34;game_info&#34;][&#34;game_name&#34;] } snapshot&#39;
+            self.set_status(new_text)
+
+            # deselect the item the user just reverted
+            self.save_games.selection_remove(filename)
+            self.revert_button.grid_remove()
+
+            # We just generated an undo save, so update the list of savegames
+            await self.find_savegames()
+
+    &#34;&#34;&#34;User wants to undo our last revert&#34;&#34;&#34;
+
+    async def on_undo_click(self):
+        # do the restore
+        si = self.undo
+        assert si
+
+        # self.engine.dry_run = True  # FIXME - testing
+        await self.engine.do_restore(si)
+
+        # Set status msg
+        new_text = f&#39;Undid changes to { si[&#34;game_info&#34;][&#34;game_name&#34;] }&#39;
+        self.set_status(new_text)
 
     async def find_supported(self):
         all_games = self.engine.find_all_game_info()
@@ -186,19 +295,24 @@ class GUI:
         saveinfos = list(filter(lambda i: not i[&#34;is_undo&#34;], all_saves))
         undos = list(filter(lambda i: i[&#34;is_undo&#34;], all_saves))
 
+        self.saves = {si[&#34;filename&#34;]: si for si in saveinfos}
+
+        # show undo button as needed
+        if len(undos) &gt; 0:
+            g = undos[0]
+            self.undo = g
+            self.undo_button.config(
+                text=f&#39;Undo changes to { g[&#34;game_info&#34;][&#34;game_name&#34;]}&#39;)
+            self.undo_button.grid()
+
+        # fill the treeview
         # put all children into the args of this function call
         tree = self.save_games
         tree.delete(*tree.get_children())
         for g in saveinfos:
             # print(f&#39;  {g}&#39;)
-
-            # our timestamps are in msecs
-            now = datetime.datetime.now()
-            ts = datetime.datetime.fromtimestamp(g[&#34;timestamp&#34;] / 1000.0)
-            ts_str = timeago.format(ts, now)
-
             tree.insert(
-                &#34;&#34;, END, values=(g[&#34;game_info&#34;][&#34;game_name&#34;], ts_str))
+                &#34;&#34;, END, iid=g[&#34;filename&#34;], values=(g[&#34;game_info&#34;][&#34;game_name&#34;], saveinfo_ago_str(g)))
 
     &#34;&#34;&#34;Look for steam changes, and then queue up looking again&#34;&#34;&#34;
     async def watch_steam(self):
@@ -207,15 +321,18 @@ class GUI:
 
         if (len(backups) &gt; 0):
             si = backups[0]  # only print for first one (the common case)
-            new_text = f&#39;Snapshot taken for { si[&#34;game_info&#34;][&#34;game_name&#34;] } at FIXME&#39;
+            new_text = f&#39;Save-game snapshot taken for { si[&#34;game_info&#34;][&#34;game_name&#34;] }...&#39;
             await self.find_savegames()
-            self.status.config(text=new_text)
+            self.set_status(new_text)
 
         # Our run is exiting, but queue one for the future
         quitting = False
         if not quitting:
             await asyncio.sleep(5)
             asyncio.create_task(self.watch_steam())
+
+    def set_status(self, new_text):
+        self.status.config(text=new_text)
 
     async def async_main_loop(self):
         # do this in the background - update gui when done
@@ -312,14 +429,21 @@ def run(e: Engine):
     :param root: tkinter root object
     :return: nothing
     &#34;&#34;&#34;
-    while True:
-        try:
-            root.winfo_exists()  # Will throw TclError if the main window is destroyed
-            root.update()
-        except TclError:
-            break
+    try:
+        while True:
+            try:
+                root.winfo_exists()  # Will throw TclError if the main window is destroyed
+                root.update()
+            except TclError:
+                break
 
-        await asyncio.sleep(0.1)</code></pre>
+            # Don&#39;t poll events quickly if not visible and not the focus of the user
+            # no longer checking root.state() == &#39;normal&#39;
+            interval = 0.05 if root.focus_displayof() else 0.5
+            await asyncio.sleep(interval)
+    except TclError as e:
+        if not &#34;application has been destroyed&#34; in str(e):
+            print(f&#39;Exiting due to { e }&#39;)</code></pre>
 </details>
 </dd>
 <dt id="steamback.gui.run"><code class="name flex">
@@ -350,6 +474,23 @@ def run(e: Engine):
     ).run_until_complete(g.async_main_loop())</code></pre>
 </details>
 </dd>
+<dt id="steamback.gui.saveinfo_ago_str"><code class="name flex">
+<span>def <span class="ident">saveinfo_ago_str</span></span>(<span>si: dict) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def saveinfo_ago_str(si: dict) -&gt; str:
+    # our timestamps are in msecs
+    now = datetime.datetime.now()
+    ts = datetime.datetime.fromtimestamp(si[&#34;timestamp&#34;] / 1000.0)
+    ts_str = timeago.format(ts, now)
+    return ts_str</code></pre>
+</details>
+</dd>
 </dl>
 </section>
 <section>
@@ -372,10 +513,34 @@ def run(e: Engine):
         self.engine = e
         self.watcher = util.SteamWatcher(e)
 
+        # A dictionary mapping from saveinfo filename to saveinfo dictionary object
+        self.saves = None
+
+        # The saveinfo for the undo file
+        self.undo = None
+
         self.set_app_icon()
 
         root.title(&#34;Steamback&#34;)
-        root.resizable(width=300, height=200)
+        root.resizable(width=800, height=400)
+
+        &#34;&#34;&#34;Save window position on exit&#34;&#34;&#34;
+
+        def on_close():
+            # Here I write the X Y position of the window to a file &#34;myapp.conf&#34;
+            with open(os.path.join(self.engine.config.app_data_dir, &#34;window.conf&#34;), &#34;w&#34;) as conf:
+                conf.write(root.geometry())
+
+            root.destroy()
+
+        root.protocol(&#34;WM_DELETE_WINDOW&#34;, on_close)
+
+        # Here I read the X and Y positon of the window from when I last closed it.
+        try:
+            with open(os.path.join(self.engine.config.app_data_dir, &#34;window.conf&#34;), &#34;r&#34;) as conf:
+                root.geometry(conf.read())
+        except Exception:
+            pass  # Ignore any errors (file might be missing etc)
 
         &#34;&#34;&#34; self.label_index = 0
         self.label_text = StringVar()
@@ -389,6 +554,11 @@ def run(e: Engine):
 
         # self.close_button = ttk.Button(root, text=&#34;Close&#34;, command=root.quit)
         # self.close_button.pack()
+
+        self.undo_button = ttk.Button(
+            root, text=&#34;Undo changes to XXX&#34;, command=async_handler(self.on_undo_click))
+        self.revert_button = ttk.Button(
+            root, text=&#34;Revert XXX to save from 5 minutes ago&#34;, command=async_handler(self.on_revert_click))
 
         # Define a label for the list.
         self.status = ttk.Label(
@@ -428,6 +598,10 @@ def run(e: Engine):
         treev[&#39;show&#39;] = &#39;headings&#39;
         treev.heading(&#34;name&#34;, text=&#34;Supported Games&#34;)
 
+        char_width = 8
+        treev.column(&#34;name&#34;, minwidth=char_width * 10,
+                     width=char_width * 30, stretch=YES)
+
         # List save games
         treev = ttk.Treeview(root,
                              selectmode=&#39;browse&#39;
@@ -446,15 +620,29 @@ def run(e: Engine):
         treev.heading(&#34;name&#34;, text=&#34;Save games&#34;)
         treev.heading(&#34;time&#34;, text=&#34;Time&#34;)
 
+        treev.column(&#34;name&#34;, minwidth=char_width * 10,
+                     width=char_width * 30, stretch=YES)
+        treev.column(&#34;time&#34;, minwidth=char_width * 6,
+                     width=char_width * 15, stretch=NO)
+
+        treev.bind(&#34;&lt;&lt;TreeviewSelect&gt;&gt;&#34;, self.on_savegame_selected)
+
         # Do the layout per this great documentation: https://tkdocs.com/tutorial/grid.html
 
-        self.supported_games.grid(row=0, column=0, sticky=(N, S, W), rowspan=2)
-        games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=2)
+        self.supported_games.grid(
+            row=0, column=0, sticky=(N, S, W, E), rowspan=3)
+        games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=3)
 
-        self.save_games.grid(row=0, column=3, sticky=(N, S, E), rowspan=1)
+        self.save_games.grid(row=0, column=3, sticky=(N, S, E, W), rowspan=1)
         saves_sb.grid(row=0, column=4, sticky=(N, S), rowspan=1)
 
-        self.status.grid(row=2, sticky=(W, E))
+        # Position the various undo/revert buttons but hide them for now
+        self.undo_button.grid(row=1, column=3, padx=8, pady=8)
+        self.revert_button.grid(row=2, column=3, padx=8, pady=8)
+        self.undo_button.grid_remove()
+        self.revert_button.grid_remove()
+
+        self.status.grid(row=10, sticky=(W, E), padx=8, pady=8)
 
         root.rowconfigure(0, weight=1)
 
@@ -462,6 +650,53 @@ def run(e: Engine):
         root.columnconfigure(0, weight=1)
         root.columnconfigure(2, weight=1)
         root.columnconfigure(3, weight=1)
+
+    &#34;&#34;&#34;A savegame was selected in the treeview&#34;&#34;&#34;
+
+    def on_savegame_selected(self, event):
+        for filename in self.save_games.selection():
+            si = self.saves[filename]
+
+            # set revert button text
+            self.revert_button.config(
+                text=f&#39;Revert { si[&#34;game_info&#34;][&#34;game_name&#34;]} to save from { saveinfo_ago_str(si)}&#39;)
+
+            self.revert_button.grid()  # show revert button
+
+    &#34;&#34;&#34;user clicked to restore from a savegame&#34;&#34;&#34;
+
+    async def on_revert_click(self):
+        for filename in self.save_games.selection():
+
+            # do the restore
+            si = self.saves[filename]
+            # self.engine.dry_run = True  # FIXME - testing
+            await self.engine.do_restore(si)
+
+            # Set status msg
+            new_text = f&#39;Reverted to { si[&#34;game_info&#34;][&#34;game_name&#34;] } snapshot&#39;
+            self.set_status(new_text)
+
+            # deselect the item the user just reverted
+            self.save_games.selection_remove(filename)
+            self.revert_button.grid_remove()
+
+            # We just generated an undo save, so update the list of savegames
+            await self.find_savegames()
+
+    &#34;&#34;&#34;User wants to undo our last revert&#34;&#34;&#34;
+
+    async def on_undo_click(self):
+        # do the restore
+        si = self.undo
+        assert si
+
+        # self.engine.dry_run = True  # FIXME - testing
+        await self.engine.do_restore(si)
+
+        # Set status msg
+        new_text = f&#39;Undid changes to { si[&#34;game_info&#34;][&#34;game_name&#34;] }&#39;
+        self.set_status(new_text)
 
     async def find_supported(self):
         all_games = self.engine.find_all_game_info()
@@ -481,19 +716,24 @@ def run(e: Engine):
         saveinfos = list(filter(lambda i: not i[&#34;is_undo&#34;], all_saves))
         undos = list(filter(lambda i: i[&#34;is_undo&#34;], all_saves))
 
+        self.saves = {si[&#34;filename&#34;]: si for si in saveinfos}
+
+        # show undo button as needed
+        if len(undos) &gt; 0:
+            g = undos[0]
+            self.undo = g
+            self.undo_button.config(
+                text=f&#39;Undo changes to { g[&#34;game_info&#34;][&#34;game_name&#34;]}&#39;)
+            self.undo_button.grid()
+
+        # fill the treeview
         # put all children into the args of this function call
         tree = self.save_games
         tree.delete(*tree.get_children())
         for g in saveinfos:
             # print(f&#39;  {g}&#39;)
-
-            # our timestamps are in msecs
-            now = datetime.datetime.now()
-            ts = datetime.datetime.fromtimestamp(g[&#34;timestamp&#34;] / 1000.0)
-            ts_str = timeago.format(ts, now)
-
             tree.insert(
-                &#34;&#34;, END, values=(g[&#34;game_info&#34;][&#34;game_name&#34;], ts_str))
+                &#34;&#34;, END, iid=g[&#34;filename&#34;], values=(g[&#34;game_info&#34;][&#34;game_name&#34;], saveinfo_ago_str(g)))
 
     &#34;&#34;&#34;Look for steam changes, and then queue up looking again&#34;&#34;&#34;
     async def watch_steam(self):
@@ -502,15 +742,18 @@ def run(e: Engine):
 
         if (len(backups) &gt; 0):
             si = backups[0]  # only print for first one (the common case)
-            new_text = f&#39;Snapshot taken for { si[&#34;game_info&#34;][&#34;game_name&#34;] } at FIXME&#39;
+            new_text = f&#39;Save-game snapshot taken for { si[&#34;game_info&#34;][&#34;game_name&#34;] }...&#39;
             await self.find_savegames()
-            self.status.config(text=new_text)
+            self.set_status(new_text)
 
         # Our run is exiting, but queue one for the future
         quitting = False
         if not quitting:
             await asyncio.sleep(5)
             asyncio.create_task(self.watch_steam())
+
+    def set_status(self, new_text):
+        self.status.config(text=new_text)
 
     async def async_main_loop(self):
         # do this in the background - update gui when done
@@ -570,19 +813,24 @@ def run(e: Engine):
     saveinfos = list(filter(lambda i: not i[&#34;is_undo&#34;], all_saves))
     undos = list(filter(lambda i: i[&#34;is_undo&#34;], all_saves))
 
+    self.saves = {si[&#34;filename&#34;]: si for si in saveinfos}
+
+    # show undo button as needed
+    if len(undos) &gt; 0:
+        g = undos[0]
+        self.undo = g
+        self.undo_button.config(
+            text=f&#39;Undo changes to { g[&#34;game_info&#34;][&#34;game_name&#34;]}&#39;)
+        self.undo_button.grid()
+
+    # fill the treeview
     # put all children into the args of this function call
     tree = self.save_games
     tree.delete(*tree.get_children())
     for g in saveinfos:
         # print(f&#39;  {g}&#39;)
-
-        # our timestamps are in msecs
-        now = datetime.datetime.now()
-        ts = datetime.datetime.fromtimestamp(g[&#34;timestamp&#34;] / 1000.0)
-        ts_str = timeago.format(ts, now)
-
         tree.insert(
-            &#34;&#34;, END, values=(g[&#34;game_info&#34;][&#34;game_name&#34;], ts_str))</code></pre>
+            &#34;&#34;, END, iid=g[&#34;filename&#34;], values=(g[&#34;game_info&#34;][&#34;game_name&#34;], saveinfo_ago_str(g)))</code></pre>
 </details>
 </dd>
 <dt id="steamback.gui.GUI.find_supported"><code class="name flex">
@@ -604,6 +852,77 @@ def run(e: Engine):
     for g in supported:
         tree.insert(
             &#34;&#34;, END, values=(g[&#34;game_name&#34;], ))</code></pre>
+</details>
+</dd>
+<dt id="steamback.gui.GUI.on_revert_click"><code class="name flex">
+<span>async def <span class="ident">on_revert_click</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def on_revert_click(self):
+    for filename in self.save_games.selection():
+
+        # do the restore
+        si = self.saves[filename]
+        # self.engine.dry_run = True  # FIXME - testing
+        await self.engine.do_restore(si)
+
+        # Set status msg
+        new_text = f&#39;Reverted to { si[&#34;game_info&#34;][&#34;game_name&#34;] } snapshot&#39;
+        self.set_status(new_text)
+
+        # deselect the item the user just reverted
+        self.save_games.selection_remove(filename)
+        self.revert_button.grid_remove()
+
+        # We just generated an undo save, so update the list of savegames
+        await self.find_savegames()</code></pre>
+</details>
+</dd>
+<dt id="steamback.gui.GUI.on_savegame_selected"><code class="name flex">
+<span>def <span class="ident">on_savegame_selected</span></span>(<span>self, event)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def on_savegame_selected(self, event):
+    for filename in self.save_games.selection():
+        si = self.saves[filename]
+
+        # set revert button text
+        self.revert_button.config(
+            text=f&#39;Revert { si[&#34;game_info&#34;][&#34;game_name&#34;]} to save from { saveinfo_ago_str(si)}&#39;)
+
+        self.revert_button.grid()  # show revert button</code></pre>
+</details>
+</dd>
+<dt id="steamback.gui.GUI.on_undo_click"><code class="name flex">
+<span>async def <span class="ident">on_undo_click</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">async def on_undo_click(self):
+    # do the restore
+    si = self.undo
+    assert si
+
+    # self.engine.dry_run = True  # FIXME - testing
+    await self.engine.do_restore(si)
+
+    # Set status msg
+    new_text = f&#39;Undid changes to { si[&#34;game_info&#34;][&#34;game_name&#34;] }&#39;
+    self.set_status(new_text)</code></pre>
 </details>
 </dd>
 <dt id="steamback.gui.GUI.set_app_icon"><code class="name flex">
@@ -628,6 +947,19 @@ def run(e: Engine):
             f&#39;Can\&#39;t set application icon due to missing library: {e}&#39;)</code></pre>
 </details>
 </dd>
+<dt id="steamback.gui.GUI.set_status"><code class="name flex">
+<span>def <span class="ident">set_status</span></span>(<span>self, new_text)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_status(self, new_text):
+    self.status.config(text=new_text)</code></pre>
+</details>
+</dd>
 <dt id="steamback.gui.GUI.watch_steam"><code class="name flex">
 <span>async def <span class="ident">watch_steam</span></span>(<span>self)</span>
 </code></dt>
@@ -643,9 +975,9 @@ def run(e: Engine):
 
     if (len(backups) &gt; 0):
         si = backups[0]  # only print for first one (the common case)
-        new_text = f&#39;Snapshot taken for { si[&#34;game_info&#34;][&#34;game_name&#34;] } at FIXME&#39;
+        new_text = f&#39;Save-game snapshot taken for { si[&#34;game_info&#34;][&#34;game_name&#34;] }...&#39;
         await self.find_savegames()
-        self.status.config(text=new_text)
+        self.set_status(new_text)
 
     # Our run is exiting, but queue one for the future
     quitting = False
@@ -675,6 +1007,7 @@ def run(e: Engine):
 <li><code><a title="steamback.gui.add_scrollbar" href="#steamback.gui.add_scrollbar">add_scrollbar</a></code></li>
 <li><code><a title="steamback.gui.main_loop" href="#steamback.gui.main_loop">main_loop</a></code></li>
 <li><code><a title="steamback.gui.run" href="#steamback.gui.run">run</a></code></li>
+<li><code><a title="steamback.gui.saveinfo_ago_str" href="#steamback.gui.saveinfo_ago_str">saveinfo_ago_str</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -685,7 +1018,11 @@ def run(e: Engine):
 <li><code><a title="steamback.gui.GUI.async_main_loop" href="#steamback.gui.GUI.async_main_loop">async_main_loop</a></code></li>
 <li><code><a title="steamback.gui.GUI.find_savegames" href="#steamback.gui.GUI.find_savegames">find_savegames</a></code></li>
 <li><code><a title="steamback.gui.GUI.find_supported" href="#steamback.gui.GUI.find_supported">find_supported</a></code></li>
+<li><code><a title="steamback.gui.GUI.on_revert_click" href="#steamback.gui.GUI.on_revert_click">on_revert_click</a></code></li>
+<li><code><a title="steamback.gui.GUI.on_savegame_selected" href="#steamback.gui.GUI.on_savegame_selected">on_savegame_selected</a></code></li>
+<li><code><a title="steamback.gui.GUI.on_undo_click" href="#steamback.gui.GUI.on_undo_click">on_undo_click</a></code></li>
 <li><code><a title="steamback.gui.GUI.set_app_icon" href="#steamback.gui.GUI.set_app_icon">set_app_icon</a></code></li>
+<li><code><a title="steamback.gui.GUI.set_status" href="#steamback.gui.GUI.set_status">set_status</a></code></li>
 <li><code><a title="steamback.gui.GUI.watch_steam" href="#steamback.gui.GUI.watch_steam">watch_steam</a></code></li>
 </ul>
 </li>
