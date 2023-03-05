@@ -32,14 +32,20 @@ async def main_loop(root: Tk) -> None:
     :param root: tkinter root object
     :return: nothing
     """
-    while True:
-        try:
-            root.winfo_exists()  # Will throw TclError if the main window is destroyed
-            root.update()
-        except TclError:
-            break
+    try:
+        while True:
+            try:
+                root.winfo_exists()  # Will throw TclError if the main window is destroyed
+                root.update()
+            except TclError:
+                break
 
-        await asyncio.sleep(0.1)
+            # Don't poll events quickly if not visible and not the focus of the user
+            interval = 0.1 if root.state() == 'normal' and root.focus_displayof() else 1.0
+            await asyncio.sleep(interval)
+    except TclError as e:
+        if not "application has been destroyed" in str(e):
+            print(f'Exiting due to { e }')
 
 
 class GUI:
