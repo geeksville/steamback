@@ -41,7 +41,8 @@ async def main_loop(root: Tk) -> None:
                 break
 
             # Don't poll events quickly if not visible and not the focus of the user
-            interval = 0.1 if root.state() == 'normal' and root.focus_displayof() else 1.0
+            # no longer checking root.state() == 'normal'
+            interval = 0.05 if root.focus_displayof() else 0.5
             await asyncio.sleep(interval)
     except TclError as e:
         if not "application has been destroyed" in str(e):
@@ -90,6 +91,11 @@ class GUI:
 
         # self.close_button = ttk.Button(root, text="Close", command=root.quit)
         # self.close_button.pack()
+
+        self.undo_button = ttk.Button(
+            root, text="Undo change to XXX", command=self.on_undo_click)
+        self.revert_button = ttk.Button(
+            root, text="Revert XXX to save from 5 minutes ago", command=self.on_revert_click)
 
         # Define a label for the list.
         self.status = ttk.Label(
@@ -147,6 +153,8 @@ class GUI:
         treev.heading("name", text="Save games")
         treev.heading("time", text="Time")
 
+        treev.bind("<<TreeviewSelect>>", self.on_savegame_selected)
+
         # Do the layout per this great documentation: https://tkdocs.com/tutorial/grid.html
 
         self.supported_games.grid(row=0, column=0, sticky=(N, S, W), rowspan=2)
@@ -155,7 +163,13 @@ class GUI:
         self.save_games.grid(row=0, column=3, sticky=(N, S, E), rowspan=1)
         saves_sb.grid(row=0, column=4, sticky=(N, S), rowspan=1)
 
-        self.status.grid(row=2, sticky=(W, E))
+        # Position the various undo/revert buttons but hide them for now
+        self.undo_button.grid(row=1, column=3)
+        self.revert_button.grid(row=2, column=3)
+        self.undo_button.grid_remove()
+        self.revert_button.grid_remove()
+
+        self.status.grid(row=10, sticky=(W, E))
 
         root.rowconfigure(0, weight=1)
 
@@ -163,6 +177,24 @@ class GUI:
         root.columnconfigure(0, weight=1)
         root.columnconfigure(2, weight=1)
         root.columnconfigure(3, weight=1)
+
+    """A savegame was selected in the treeview"""
+
+    def on_savegame_selected(self, event):
+        for item in self.save_games.selection():
+            self.revert_button.grid()  # show it
+
+    """user clicked to restore from a savegame"""
+
+    def on_revert_click(self):
+        for item in self.save_games.selection():
+            # deselect the item the user just reverted
+            self.tree.selection_remove(item)
+
+    """User wants to undo our last revert"""
+
+    def on_undo_click(self):
+        pass
 
     async def find_supported(self):
         all_games = self.engine.find_all_game_info()
@@ -182,6 +214,14 @@ class GUI:
         saveinfos = list(filter(lambda i: not i["is_undo"], all_saves))
         undos = list(filter(lambda i: i["is_undo"], all_saves))
 
+        # show undo button as needed
+        if len(undos) > 0:
+            g = undos[0]
+            self.undo_button.config(
+                text=f'Undo change to { g["game_info"]["game_name"]}')
+            self.undo_button.grid()
+
+        # fill the treeview
         # put all children into the args of this function call
         tree = self.save_games
         tree.delete(*tree.get_children())
