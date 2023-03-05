@@ -49,12 +49,26 @@ async def main_loop(root: Tk) -> None:
             print(f'Exiting due to { e }')
 
 
+def saveinfo_ago_str(si: dict) -> str:
+    # our timestamps are in msecs
+    now = datetime.datetime.now()
+    ts = datetime.datetime.fromtimestamp(si["timestamp"] / 1000.0)
+    ts_str = timeago.format(ts, now)
+    return ts_str
+
+
 class GUI:
 
     def __init__(self, root: Tk, e: Engine):
         self.root = root
         self.engine = e
         self.watcher = util.SteamWatcher(e)
+
+        # A dictionary mapping from saveinfo filename to saveinfo dictionary object
+        self.saves = None
+
+        # The saveinfo for the undo file
+        self.undo = None
 
         self.set_app_icon()
 
@@ -95,7 +109,7 @@ class GUI:
         self.undo_button = ttk.Button(
             root, text="Undo change to XXX", command=self.on_undo_click)
         self.revert_button = ttk.Button(
-            root, text="Revert XXX to save from 5 minutes ago", command=self.on_revert_click)
+            root, text="Revert XXX to save from 5 minutes ago", command=async_handler(self.on_revert_click))
 
         # Define a label for the list.
         self.status = ttk.Label(
@@ -181,13 +195,29 @@ class GUI:
     """A savegame was selected in the treeview"""
 
     def on_savegame_selected(self, event):
-        for item in self.save_games.selection():
-            self.revert_button.grid()  # show it
+        for filename in self.save_games.selection():
+            si = self.saves[filename]
+
+            # set revert button text
+            self.revert_button.config(
+                text=f'Revert { si["game_info"]["game_name"]} to save from { saveinfo_ago_str(si)}')
+
+            self.revert_button.grid()  # show revert button
 
     """user clicked to restore from a savegame"""
 
-    def on_revert_click(self):
-        for item in self.save_games.selection():
+    async def on_revert_click(self):
+        for filename in self.save_games.selection():
+
+            # do the restore
+            si = self.saves[filename]
+            self.engine.dry_run = True  # FIXME - testing
+            await self.engine.do_restore(si)
+
+            # Set status msg
+            new_text = f'Reverted { si["game_info"]["game_name"] } from snapshot'
+            self.set_status(new_text)
+
             # deselect the item the user just reverted
             self.tree.selection_remove(item)
 
@@ -214,9 +244,12 @@ class GUI:
         saveinfos = list(filter(lambda i: not i["is_undo"], all_saves))
         undos = list(filter(lambda i: i["is_undo"], all_saves))
 
+        self.saves = {si["filename"]: si for si in saveinfos}
+
         # show undo button as needed
         if len(undos) > 0:
             g = undos[0]
+            self.undo = g
             self.undo_button.config(
                 text=f'Undo change to { g["game_info"]["game_name"]}')
             self.undo_button.grid()
@@ -227,14 +260,8 @@ class GUI:
         tree.delete(*tree.get_children())
         for g in saveinfos:
             # print(f'  {g}')
-
-            # our timestamps are in msecs
-            now = datetime.datetime.now()
-            ts = datetime.datetime.fromtimestamp(g["timestamp"] / 1000.0)
-            ts_str = timeago.format(ts, now)
-
             tree.insert(
-                "", END, values=(g["game_info"]["game_name"], ts_str))
+                "", END, iid=g["filename"], values=(g["game_info"]["game_name"], saveinfo_ago_str(g)))
 
     """Look for steam changes, and then queue up looking again"""
     async def watch_steam(self):
@@ -245,13 +272,16 @@ class GUI:
             si = backups[0]  # only print for first one (the common case)
             new_text = f'Snapshot taken for { si["game_info"]["game_name"] } at FIXME'
             await self.find_savegames()
-            self.status.config(text=new_text)
+            self.set_status(new_text)
 
         # Our run is exiting, but queue one for the future
         quitting = False
         if not quitting:
             await asyncio.sleep(5)
             asyncio.create_task(self.watch_steam())
+
+    def set_status(self, new_text):
+        self.status.config(text=new_text)
 
     async def async_main_loop(self):
         # do this in the background - update gui when done
