@@ -73,7 +73,7 @@ class GUI:
         self.set_app_icon()
 
         root.title("Steamback")
-        root.resizable(width=300, height=200)
+        root.resizable(width=800, height=400)
 
         """Save window position on exit"""
 
@@ -90,7 +90,7 @@ class GUI:
         try:
             with open(os.path.join(self.engine.config.app_data_dir, "window.conf"), "r") as conf:
                 root.geometry(conf.read())
-        except e:
+        except Exception:
             pass  # Ignore any errors (file might be missing etc)
 
         """ self.label_index = 0
@@ -149,6 +149,10 @@ class GUI:
         treev['show'] = 'headings'
         treev.heading("name", text="Supported Games")
 
+        char_width = 8
+        treev.column("name", minwidth=char_width * 10,
+                     width=char_width * 30, stretch=YES)
+
         # List save games
         treev = ttk.Treeview(root,
                              selectmode='browse'
@@ -167,23 +171,29 @@ class GUI:
         treev.heading("name", text="Save games")
         treev.heading("time", text="Time")
 
+        treev.column("name", minwidth=char_width * 10,
+                     width=char_width * 30, stretch=YES)
+        treev.column("time", minwidth=char_width * 6,
+                     width=char_width * 15, stretch=NO)
+
         treev.bind("<<TreeviewSelect>>", self.on_savegame_selected)
 
         # Do the layout per this great documentation: https://tkdocs.com/tutorial/grid.html
 
-        self.supported_games.grid(row=0, column=0, sticky=(N, S, W), rowspan=2)
-        games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=2)
+        self.supported_games.grid(
+            row=0, column=0, sticky=(N, S, W, E), rowspan=3)
+        games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=3)
 
-        self.save_games.grid(row=0, column=3, sticky=(N, S, E), rowspan=1)
+        self.save_games.grid(row=0, column=3, sticky=(N, S, E, W), rowspan=1)
         saves_sb.grid(row=0, column=4, sticky=(N, S), rowspan=1)
 
         # Position the various undo/revert buttons but hide them for now
-        self.undo_button.grid(row=1, column=3)
-        self.revert_button.grid(row=2, column=3)
+        self.undo_button.grid(row=1, column=3, padx=8, pady=8)
+        self.revert_button.grid(row=2, column=3, padx=8, pady=8)
         self.undo_button.grid_remove()
         self.revert_button.grid_remove()
 
-        self.status.grid(row=10, sticky=(W, E))
+        self.status.grid(row=10, sticky=(W, E), padx=8, pady=8)
 
         root.rowconfigure(0, weight=1)
 
@@ -283,7 +293,7 @@ class GUI:
 
         if (len(backups) > 0):
             si = backups[0]  # only print for first one (the common case)
-            new_text = f'Snapshot taken for { si["game_info"]["game_name"] } at FIXME'
+            new_text = f'Save-game snapshot taken for { si["game_info"]["game_name"] }...'
             await self.find_savegames()
             self.set_status(new_text)
 
