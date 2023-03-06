@@ -21,9 +21,15 @@ dependencies = [
     "Pillow ~= 9.2.0"
 ]
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["py_modules"]  # list of folders that contain the packages (["."] by default)
 include = ["steamback*"]  # package names should match these glob patterns (["*"] by default)
+
+[tool.setuptools.package-data]
+"*" = ["*.png"]
 
 [project.scripts]
 steamback = "steamback.__main__:main"
