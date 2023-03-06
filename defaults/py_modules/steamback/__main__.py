@@ -37,7 +37,7 @@ def main():
         logger.warning("""HEY! KIND TESTER! No one has tried this tool before on Windows.
                     If it works (or not) could you send an email to the author: kevinh@geeksville.com
                     If it doesn't work and you know a little python you could probably contribute an easy fix - see our github!""")
-        steam_dir = os.path.join("c:", "Program Files (x86)", "Steam")
+        steam_dir = os.path.join("c:/", "Program Files (x86)", "Steam")
     elif plat_sys == "Darwin":
         # DEAR osx devs - if this isn't correct you can probably fix it
         # please send in a pull-request if you can!
