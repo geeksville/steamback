@@ -176,7 +176,7 @@ class GUI:
         treev.column("name", minwidth=char_width * 10,
                      width=char_width * 30, stretch=YES)
         treev.column("time", minwidth=char_width * 6,
-                     width=char_width * 15, stretch=NO)
+                     width=char_width * 17, stretch=NO)
 
         treev.bind("<<TreeviewSelect>>", self.on_savegame_selected)
 
