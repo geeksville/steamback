@@ -8,6 +8,14 @@ Steamback originally started as a Decky plugin for Steam Decks.  But a number of
 
 This is a version Steamback that will hopefully work on Linux, Windows and OS-X.  However the developers have (thus-far) only tested on Linux.  If you try it on Windows or OS-X please send us a note and let us know how it goes.
 
+### Linux
+
+This tool should work on all modern linux distributions.  If you see a problem please let us know.
+
+### Windows
+
+If you know python and run Windows, please try this tool and possibly send in a pull-request for what is likely a fairly easy fix.
+
 If you are a developer and find it doesn't work on Windows or OS-X it is probably pretty easy to fix.  We'd love to work with you on a pull-request - please contact us.
 
 ## Installing
