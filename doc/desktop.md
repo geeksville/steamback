@@ -20,10 +20,10 @@ If you are a developer and find it doesn't work on Windows or OS-X it is probabl
 
 ## Installing
 
-Steamback is written in python and you should be able to install it by using the standard "pip" python tool with the following command:
+Steamback is written in python and you should be able to install (or upgrade) it by using the standard "pip" python tool with the following command:
 
 ```
-pip3 install steamback
+pip3 install --upgrade steamback
 ```
 
 ## Using
