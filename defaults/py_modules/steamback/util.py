@@ -2,6 +2,7 @@ import psutil
 import re
 import asyncio
 import os
+from typing import NamedTuple
 from . import Engine
 
 """Create a game info object: contains game_id and install_root
@@ -57,6 +58,11 @@ def find_running_games() -> list[int]:
     return r
 
 
+class CheckResult(NamedTuple):
+    game_started: bool  # true if there is a game just started
+    backed_up: list[dict]  # the games we just backed up (probably only 0 or 1)
+
+
 """Watch steam and allow async polling for game exit
 """
 
@@ -68,7 +74,7 @@ class SteamWatcher:
 
     """Look for any game exits and return the saveinfo for any backups performed
     """
-    async def check_once(self) -> list[dict]:
+    async def check_once(self) -> CheckResult:
         running = set(find_running_games())
 
         # set of games that just started
@@ -86,7 +92,7 @@ class SteamWatcher:
 
         # get ready for next time
         self.was_running = running
-        return backups
+        return CheckResult(game_started=len(started) > 0, backed_up=backups)
 
     async def run_forever(self):
         self.engine.logger.info(

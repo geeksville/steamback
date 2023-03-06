@@ -57,8 +57,10 @@ def saveinfo_ago_str(si: dict) -> str:
     return ts_str
 
 
-class GUI:
+status_watching_str = "Status: Watching Steam for game exit..."
 
+
+class GUI:
     def __init__(self, root: Tk, e: Engine):
         self.root = root
         self.engine = e
@@ -113,7 +115,7 @@ class GUI:
 
         # Define a label for the list.
         self.status = ttk.Label(
-            root, text="Status: Watching Steam for game exit...")
+            root, text=status_watching_str)
 
         # List supported games
         treev = ttk.Treeview(root,
@@ -290,7 +292,11 @@ class GUI:
     """Look for steam changes, and then queue up looking again"""
     async def watch_steam(self):
         # self.engine.ignore_unchanged = False  # for testing
-        backups = await self.watcher.check_once()
+        result = await self.watcher.check_once()
+        backups = result.backed_up
+
+        if result.game_started:
+            self.set_status(status_watching_str)
 
         if (len(backups) > 0):
             si = backups[0]  # only print for first one (the common case)
