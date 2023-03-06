@@ -193,7 +193,8 @@ class GUI:
         self.undo_button.grid_remove()
         self.revert_button.grid_remove()
 
-        self.status.grid(row=10, sticky=(W, E), padx=8, pady=8)
+        self.status.grid(row=10, column=0, sticky=(
+            W, E), padx=8, pady=8, columnspan=4)
 
         root.rowconfigure(0, weight=1)
 
