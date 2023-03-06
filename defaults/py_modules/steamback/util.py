@@ -46,8 +46,14 @@ def find_running_games() -> list[int]:
                 return int(match.group(1))
         return None
 
-    procs = map(get_game_id, psutil.process_iter())
-    r = filter(lambda p: p is not None, procs)
+    r = []
+    for proc in psutil.process_iter():
+        try:
+            id = get_game_id(proc)
+            if id:
+                r.append(id)
+        except psutil.AccessDenied:
+            pass  # Windows won't let us see some processes
     return r
 
 
