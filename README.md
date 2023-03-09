@@ -49,7 +49,7 @@ If you ever want to rewind to a particular snapshot, just click the ... button, 
 
 # License & credits
 
-Steamback is Copyright 2022 Geeksville Industries, LLC.  It is open-source (GPL v3 licensed) and we welcome collaboration on our github. 
+Steamback is Copyright 2023 Geeksville Industries, LLC.  It is open-source (GPL v3 licensed) and we welcome collaboration on our github. 
 
 The application icon when running on desktop computers is [by Icons8](https://icons8.com/icon/J6Lv30IPIWZI/refresh) and used per their terms of use.
 
