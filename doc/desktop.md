@@ -36,3 +36,6 @@ On the left side of the window you'll see which games installed on your computer
 
 If you need to revert to a particular snapshot click on it and then choose "Revert".
 
+# Are you a developer (or would you like to learn)?
+
+We love pull-requests but please see our [requirements](development.md) so your changes can be merged.

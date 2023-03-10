@@ -8,7 +8,7 @@ These snapshots allow you to 'rewind' to previous save-game versions.  This is p
 
 This plug-in is currently in alpha-testing.  Please check for updates to the steamback plugin occasionally.  If you see bugs, please file an [issue](https://github.com/geeksville/steamback/issues) at our github.
 
-![Steamback settings](docs/../doc/screenshot.jpeg)
+![Steamback settings](doc/screenshot.jpeg)
 
 ## How automatic snapshots work
 
@@ -16,7 +16,7 @@ Steamback waits for games to exit.  When a (supported) game exits it automatical
 
 ## How to rewind to a snapshot
 
-![Steamback settings](docs/../doc/confirm.jpeg)
+![Steamback settings](doc/confirm.jpeg)
 
 To rewind to a save-game:
 
@@ -35,7 +35,7 @@ Not all games are supported. This plugin only supports games that use the steam 
 
 The plugin will show what games you have installed that **are** supported.  Most (nearly all?) games marked as 'steam cloud' enabled are supported, but if you see one that isn't please file a github issue.
 
-![Steamback settings](docs/../doc/supported.jpeg)
+![Steamback settings](doc/supported.jpeg)
 
 ## How to install Steamback
 
@@ -46,6 +46,10 @@ Steamback is available in the Decky loader plug-in 'store'.  You can search for 
 The plugin will automatically take snapshots **whenever you exit a supported game**.  So if you want a snapshot, make sure to exit the game completely.  Steamback will pop up a notification in the bottom right of your screen saying "Steamback snapshot taken".
 
 If you ever want to rewind to a particular snapshot, just click the ... button, go to decky/steamback and select which snapshot you want to rewind to.
+
+# Are you a developer (or would you like to learn)?
+
+We love pull-requests but please see our [requirements](doc/development.md) so your changes can be merged.
 
 # License & credits
 
