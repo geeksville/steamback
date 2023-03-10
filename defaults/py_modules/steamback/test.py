@@ -9,7 +9,7 @@ from .util import make_game_info
 async def testImpl(p: Engine):
     print('Simulating decky loader for testing...')
 
-    p.set_account_id(49847735)
+    p.add_account_id(49847735)
     # print(f'Initial saveinfos { await p.get_saveinfos() }')
     p.ignore_unchanged = False  # Force backup for testing
 
