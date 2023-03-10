@@ -7,7 +7,11 @@ This document is a collection of instructions for developers of Steamback.
 * /src is the Steam Deck plugin Javascript
 * /py_modules/steamback is the core python module that provides the syncing/steam engine
 * main.py is only used in the Steam Deck case as glue between the module and the Decky Loader
- 
+
+## Formatting
+
+Please use the official PEP8 python formatting conventions for all python code.  If you are using the recommended VS-Code editor, this will be the default formatter for python.
+
 ## We love pull requests, but...
 
 Please send in pull-requests with improvements you make.  We'd love to merge them.  
