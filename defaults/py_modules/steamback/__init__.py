@@ -158,6 +158,7 @@ class Engine:
 
     """get all library path based on libraryfolders.vdf file
     """
+
     def _get_all_library(self) -> list[str]:
         steam_dir = self.get_steam_root()
         app_dir = os.path.join(steam_dir, "steamapps")
@@ -172,7 +173,7 @@ class Engine:
         for steam_dir in self._get_all_library():
             app_dir = os.path.join(steam_dir, "steamapps")
             files = filter(lambda f: f.startswith("appmanifest_")
-                       and f.endswith(".acf"), os.listdir(app_dir))
+                           and f.endswith(".acf"), os.listdir(app_dir))
 
             for f in files:
                 vcf = _parse_vcf(os.path.join(app_dir, f))
@@ -318,7 +319,8 @@ class Engine:
                 os.path.join(d, x)
                 for x in ["remote", os.path.join("ac", "LinuxXdgDataHome")]
             )
-            remoteFound = next((x for x in fullRemotes if os.path.isdir(x)), None)
+            remoteFound = next(
+                (x for x in fullRemotes if os.path.isdir(x)), None)
             if remoteFound:
                 # Store the savegames directory for this game
                 return remoteFound
