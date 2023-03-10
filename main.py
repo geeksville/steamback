@@ -37,7 +37,7 @@ class Plugin:
 
     async def set_account_id(self, id_num: int):
         # logger.info(f'Setting account id { id_num }')
-        get_engine().set_account_id(id_num)
+        get_engine().add_account_id(id_num)
         return None  # Must return something to prevent assertion error logspam in JS
 
     """

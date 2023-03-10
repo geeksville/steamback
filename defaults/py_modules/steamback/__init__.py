@@ -71,7 +71,7 @@ class Engine:
 
         # a dict from gameid -> gameinfo for all installed games.  ONLY USED ON DESKTOP not DECKY
         self.all_games = None
-        self.account_ids: list[int] = []
+        self.account_ids: set[int] = set()
         self.dry_run = False  # Set to true to suppress 'real' writes to directories
         self.max_saves = 10  # default to a max of ten saves
 
@@ -80,7 +80,7 @@ class Engine:
 
     def add_account_id(self, id_num: int):
         logger.debug(f'Setting account id { id_num } on { self }')
-        self.account_ids.append(id_num)
+        self.account_ids.add(id_num)
 
     """Find the steam account ID for the current user (and)
 
