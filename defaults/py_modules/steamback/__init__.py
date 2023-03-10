@@ -15,6 +15,7 @@ from pathlib import Path
 logger = None
 
 """Try to parse a valve vdf file.  Returning all key/value pairs it finds as string pairs.
+If no matching keys are found or we fail reading the file, an empty dict will be returned
 Note: this doesn't preserve hierarchy - only keys are checked
 """
 
@@ -22,12 +23,16 @@ Note: this doesn't preserve hierarchy - only keys are checked
 def _parse_vcf(path: str) -> dict:
     kvMatch = re.compile('\s*"(.+)"\s+"(.+)"\s*')
     d = {}
-    with open(path) as f:
-        for line in f:
-            # ignore leading/trailing space.  Now ideal like looks like "key"   "value"
-            m = kvMatch.fullmatch(line)
-            if m:
-                d[m.group(1)] = m.group(2)
+    try:
+        with open(path) as f:
+            for line in f:
+                # ignore leading/trailing space.  Now ideal like looks like "key"   "value"
+                m = kvMatch.fullmatch(line)
+                if m:
+                    d[m.group(1)] = m.group(2)
+    except Exception:
+        logger.error(
+            f'Failed parsing vcf { path } due to exception { traceback.format_exc() }')
     return d
 
 
@@ -317,6 +322,11 @@ class Engine:
             if remoteFound:
                 # Store the savegames directory for this game
                 return remoteFound
+
+        # finding saves only work if we have already found the installdir for this game...
+        if not self._parse_installdir(game_info):
+            logger.error(f"Invalid game_info, not installdir { game_info }")
+            return None
 
         # okay - now check the standard doc roots for games - do this before looking for autoclouds because it is more often the match
         d = self._search_likely_locations(game_info, rcf)
