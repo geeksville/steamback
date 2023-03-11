@@ -20,6 +20,10 @@ One caveat: please make the requests 'clean' in the sense that they only fix/imp
 
 Because when a PR comes in that fixes many different things and also reformats a bunch of code it is almost impossible to review (to check for unintended changes).
 
+## Using this module in other projects
+
+The python "steamback" module can be used in your other python projects.  See the (crude) developer documentation [here](steamback/index.html).
+
 ## Releasing new builds to pypi
 
 The desktop app is distributed via pip.  To make a new release (if you are one of the developers with release keys):
