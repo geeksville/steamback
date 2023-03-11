@@ -30,6 +30,7 @@
 import re
 import asyncio
 import os
+from typing import NamedTuple
 from . import Engine
 
 &#34;&#34;&#34;Create a game info object: contains game_id and install_root
@@ -85,6 +86,11 @@ def find_running_games() -&gt; list[int]:
     return r
 
 
+class CheckResult(NamedTuple):
+    game_started: bool  # true if there is a game just started
+    backed_up: list[dict]  # the games we just backed up (probably only 0 or 1)
+
+
 &#34;&#34;&#34;Watch steam and allow async polling for game exit
 &#34;&#34;&#34;
 
@@ -96,7 +102,7 @@ class SteamWatcher:
 
     &#34;&#34;&#34;Look for any game exits and return the saveinfo for any backups performed
     &#34;&#34;&#34;
-    async def check_once(self) -&gt; list[dict]:
+    async def check_once(self) -&gt; CheckResult:
         running = set(find_running_games())
 
         # set of games that just started
@@ -114,7 +120,7 @@ class SteamWatcher:
 
         # get ready for next time
         self.was_running = running
-        return backups
+        return CheckResult(game_started=len(started) &gt; 0, backed_up=backups)
 
     async def run_forever(self):
         self.engine.logger.info(
@@ -196,6 +202,36 @@ class SteamWatcher:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="steamback.util.CheckResult"><code class="flex name class">
+<span>class <span class="ident">CheckResult</span></span>
+<span>(</span><span>game_started: bool, backed_up: list[dict])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>CheckResult(game_started, backed_up)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class CheckResult(NamedTuple):
+    game_started: bool  # true if there is a game just started
+    backed_up: list[dict]  # the games we just backed up (probably only 0 or 1)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.tuple</li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="steamback.util.CheckResult.backed_up"><code class="name">var <span class="ident">backed_up</span> : list[dict]</code></dt>
+<dd>
+<div class="desc"><p>Alias for field number 1</p></div>
+</dd>
+<dt id="steamback.util.CheckResult.game_started"><code class="name">var <span class="ident">game_started</span> : bool</code></dt>
+<dd>
+<div class="desc"><p>Alias for field number 0</p></div>
+</dd>
+</dl>
+</dd>
 <dt id="steamback.util.SteamWatcher"><code class="flex name class">
 <span>class <span class="ident">SteamWatcher</span></span>
 <span>(</span><span>engine: <a title="steamback.Engine" href="index.html#steamback.Engine">Engine</a>)</span>
@@ -213,7 +249,7 @@ class SteamWatcher:
 
     &#34;&#34;&#34;Look for any game exits and return the saveinfo for any backups performed
     &#34;&#34;&#34;
-    async def check_once(self) -&gt; list[dict]:
+    async def check_once(self) -&gt; CheckResult:
         running = set(find_running_games())
 
         # set of games that just started
@@ -231,7 +267,7 @@ class SteamWatcher:
 
         # get ready for next time
         self.was_running = running
-        return backups
+        return CheckResult(game_started=len(started) &gt; 0, backed_up=backups)
 
     async def run_forever(self):
         self.engine.logger.info(
@@ -243,7 +279,7 @@ class SteamWatcher:
 <h3>Methods</h3>
 <dl>
 <dt id="steamback.util.SteamWatcher.check_once"><code class="name flex">
-<span>async def <span class="ident">check_once</span></span>(<span>self) ‑> list[dict]</span>
+<span>async def <span class="ident">check_once</span></span>(<span>self) ‑> <a title="steamback.util.CheckResult" href="#steamback.util.CheckResult">CheckResult</a></span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -251,7 +287,7 @@ class SteamWatcher:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">async def check_once(self) -&gt; list[dict]:
+<pre><code class="python">async def check_once(self) -&gt; CheckResult:
     running = set(find_running_games())
 
     # set of games that just started
@@ -269,7 +305,7 @@ class SteamWatcher:
 
     # get ready for next time
     self.was_running = running
-    return backups</code></pre>
+    return CheckResult(game_started=len(started) &gt; 0, backed_up=backups)</code></pre>
 </details>
 </dd>
 <dt id="steamback.util.SteamWatcher.run_forever"><code class="name flex">
@@ -313,6 +349,13 @@ class SteamWatcher:
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
+<li>
+<h4><code><a title="steamback.util.CheckResult" href="#steamback.util.CheckResult">CheckResult</a></code></h4>
+<ul class="">
+<li><code><a title="steamback.util.CheckResult.backed_up" href="#steamback.util.CheckResult.backed_up">backed_up</a></code></li>
+<li><code><a title="steamback.util.CheckResult.game_started" href="#steamback.util.CheckResult.game_started">game_started</a></code></li>
+</ul>
+</li>
 <li>
 <h4><code><a title="steamback.util.SteamWatcher" href="#steamback.util.SteamWatcher">SteamWatcher</a></code></h4>
 <ul class="">

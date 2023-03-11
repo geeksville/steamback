@@ -43,6 +43,7 @@ from pathlib import Path
 logger = None
 
 &#34;&#34;&#34;Try to parse a valve vdf file.  Returning all key/value pairs it finds as string pairs.
+If no matching keys are found or we fail reading the file, an empty dict will be returned
 Note: this doesn&#39;t preserve hierarchy - only keys are checked
 &#34;&#34;&#34;
 
@@ -50,12 +51,28 @@ Note: this doesn&#39;t preserve hierarchy - only keys are checked
 def _parse_vcf(path: str) -&gt; dict:
     kvMatch = re.compile(&#39;\s*&#34;(.+)&#34;\s+&#34;(.+)&#34;\s*&#39;)
     d = {}
+    try:
+        with open(path) as f:
+            for line in f:
+                # ignore leading/trailing space.  Now ideal like looks like &#34;key&#34;   &#34;value&#34;
+                m = kvMatch.fullmatch(line)
+                if m:
+                    d[m.group(1)] = m.group(2)
+    except Exception:
+        logger.error(
+            f&#39;Failed parsing vcf { path } due to exception { traceback.format_exc() }&#39;)
+    return d
+
+
+def _parse_libs(path: str) -&gt; list[str]:
+    kvMatch = re.compile(&#39;\s*&#34;path&#34;\s+&#34;(.+)&#34;\s*&#39;)
+    d = []
     with open(path) as f:
         for line in f:
             # ignore leading/trailing space.  Now ideal like looks like &#34;key&#34;   &#34;value&#34;
             m = kvMatch.fullmatch(line)
             if m:
-                d[m.group(1)] = m.group(2)
+                d.append(m.group(1))
     return d
 
 
@@ -82,16 +99,16 @@ class Engine:
 
         # a dict from gameid -&gt; gameinfo for all installed games.  ONLY USED ON DESKTOP not DECKY
         self.all_games = None
-        self.account_id = 0
+        self.account_ids: set[int] = set()
         self.dry_run = False  # Set to true to suppress &#39;real&#39; writes to directories
         self.max_saves = 10  # default to a max of ten saves
 
         # don&#39;t generate backups if the files haven&#39;t changed since last backup
         self.ignore_unchanged = True
 
-    def set_account_id(self, id_num: int):
+    def add_account_id(self, id_num: int):
         logger.debug(f&#39;Setting account id { id_num } on { self }&#39;)
-        self.account_id = id_num
+        self.account_ids.add(id_num)
 
     &#34;&#34;&#34;Find the steam account ID for the current user (and)
 
@@ -99,14 +116,13 @@ class Engine:
     eventually we could look at the config file in each of those dirs to see which one was touched most recently.
     &#34;&#34;&#34;
 
-    def auto_set_account_id(self) -&gt; int:
+    def auto_set_account_id(self) -&gt; list[int]:
         files = os.listdir(os.path.join(self.get_steam_root(), &#34;userdata&#34;))
         ids = list(filter(lambda i: i is not None, map(
             lambda f: int(f) if f.isnumeric() and f != &#34;0&#34; else None, files)))
-        assert len(ids) == 1  # Is there exactly one account dir?
-        id = ids[0]
-        self.set_account_id(id)
-        return id
+        for id in ids:
+            self.add_account_id(id)
+        return ids
 
     &#34;&#34;&#34;
     Return the saves directory path (creating it if necessary)
@@ -131,9 +147,14 @@ class Engine:
     Return the path to the game directory for a specified game
     &#34;&#34;&#34;
 
-    def _get_gamedir(self, game_id: int) -&gt; str:
-        assert self.account_id  # better be set by now
-        return os.path.join(self.get_steam_root(), &#34;userdata&#34;, str(self.account_id), str(game_id))
+    def _get_gamedir(self, game_id: int) -&gt; list[str]:
+        assert len(self.account_ids) &gt; 0  # better be set by now
+        return [
+            os.path.join(
+                self.get_steam_root(), &#34;userdata&#34;, str(account_id), str(game_id)
+            )
+            for account_id in self.account_ids
+        ]
 
     &#34;&#34;&#34;return true if the game is installed on external storage
     &#34;&#34;&#34;
@@ -163,30 +184,39 @@ class Engine:
         install_dir = vcf.get(&#34;installdir&#34;, None)
         return install_dir
 
+    &#34;&#34;&#34;get all library path based on libraryfolders.vdf file
+    &#34;&#34;&#34;
+
+    def _get_all_library(self) -&gt; list[str]:
+        steam_dir = self.get_steam_root()
+        app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
+        return _parse_libs(os.path.join(app_dir, &#34;libraryfolders.vdf&#34;))
+
     &#34;&#34;&#34;Return all games that can be found on this system (only used for python apps - when in Decky this comes from JS)
     &#34;&#34;&#34;
 
     def find_all_game_info(self) -&gt; list[dict]:
-        steam_dir = self.get_steam_root()
-        app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
-        files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
-                       and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
         r = []
         rdict = {}  # a dict from game id int to the gameinfo object
-        for f in files:
-            vcf = _parse_vcf(os.path.join(app_dir, f))
-            id = vcf.get(&#34;appid&#34;, None)
-            name = vcf.get(&#34;name&#34;, None)
-            if id and name:
-                id = int(id)
-                info = {
-                    # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
-                    &#34;install_root&#34;: steam_dir,
-                    &#34;game_id&#34;: id,
-                    &#34;game_name&#34;: name
-                }
-                r.append(info)
-                rdict[id] = info
+        for steam_dir in self._get_all_library():
+            app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
+            files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
+                           and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
+
+            for f in files:
+                vcf = _parse_vcf(os.path.join(app_dir, f))
+                id = vcf.get(&#34;appid&#34;, None)
+                name = vcf.get(&#34;name&#34;, None)
+                if id and name:
+                    id = int(id)
+                    info = {
+                        # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
+                        &#34;install_root&#34;: steam_dir,
+                        &#34;game_id&#34;: id,
+                        &#34;game_name&#34;: name,
+                    }
+                    r.append(info)
+                    rdict[id] = info
 
         self.all_games = rdict
         return r
@@ -309,15 +339,24 @@ class Engine:
     &#34;&#34;&#34;
 
     def _find_save_games(self, game_info, rcf: list[str]) -&gt; str:
-        d = self._get_gamedir(game_info[&#34;game_id&#34;])
+        dirs = self._get_gamedir(game_info[&#34;game_id&#34;])
 
-        # First check to see if the game uses the &#39;new&#39; &#34;remote&#34; directory approach to save files (i.e. they used the steam backup API from the app)
-        fullRemotes = (os.path.join(d, x)
-                       for x in [&#34;remote&#34;, os.path.join(&#34;ac&#34;, &#34;LinuxXdgDataHome&#34;)])
-        remoteFound = next((x for x in fullRemotes if os.path.isdir(x)), None)
-        if remoteFound:
-            # Store the savegames directory for this game
-            return remoteFound
+        for d in dirs:
+            # First check to see if the game uses the &#39;new&#39; &#34;remote&#34; directory approach to save files (i.e. they used the steam backup API from the app)
+            fullRemotes = (
+                os.path.join(d, x)
+                for x in [&#34;remote&#34;, os.path.join(&#34;ac&#34;, &#34;LinuxXdgDataHome&#34;)]
+            )
+            remoteFound = next(
+                (x for x in fullRemotes if os.path.isdir(x)), None)
+            if remoteFound:
+                # Store the savegames directory for this game
+                return remoteFound
+
+        # finding saves only work if we have already found the installdir for this game...
+        if not self._parse_installdir(game_info):
+            logger.error(f&#34;Invalid game_info, not installdir { game_info }&#34;)
+            return None
 
         # okay - now check the standard doc roots for games - do this before looking for autoclouds because it is more often the match
         d = self._search_likely_locations(game_info, rcf)
@@ -362,42 +401,42 @@ class Engine:
     &#34;&#34;&#34;
 
     def _read_rcf(self, game_info: dict) -&gt; list[str]:
-        d = self._get_gamedir(game_info[&#34;game_id&#34;])
-        path = os.path.join(d, &#34;remotecache.vdf&#34;)
+        dirs = self._get_gamedir(game_info[&#34;game_id&#34;])
+        paths = [os.path.join(d, &#34;remotecache.vdf&#34;) for d in dirs]
         # logger.debug(f&#39;Read rcf {path}&#39;)
 
         rcf = []
-        if os.path.isfile(path):
-            with open(path) as f:
-                s = f.read()  # read full file as a string
-                lines = s.split(&#39;\n&#39;)
-                # logger.debug(f&#39;file is {lines}&#39;)
+        for path in paths:
+            if os.path.isfile(path):
+                with open(path) as f:
+                    s = f.read()  # read full file as a string
+                    lines = s.split(&#34;\n&#34;)
+                    # logger.debug(f&#39;file is {lines}&#39;)
 
-                # drop first two lines because they are &#34;gameid&#34; {
-                lines = lines[2:]
-                # We look for lines containing quotes and immediately preceeding lines with just an open brace
-                prevl = None
+                    # drop first two lines because they are &#34;gameid&#34; {
+                    lines = lines[2:]
+                    # We look for lines containing quotes and immediately preceeding lines with just an open brace
+                    prevl = None
 
-                skipping = False
-                for l in lines:
-                    s = l.strip()
-                    if skipping:  # skip the contents of {} records
-                        if s == &#34;}&#34;:
-                            skipping = False
-                    elif s == &#34;{&#34;:
-                        if prevl:
-                            # prevl will have quote chars as first and last of string.  Remove them
-                            filename = (prevl[1:])[:-1]
-                            rcf.append(filename)
-                            prevl = None
+                    skipping = False
+                    for l in lines:
+                        s = l.strip()
+                        if skipping:  # skip the contents of {} records
+                            if s == &#34;}&#34;:
+                                skipping = False
+                        elif s == &#34;{&#34;:
+                            if prevl:
+                                # prevl will have quote chars as first and last of string.  Remove them
+                                filename = (prevl[1:])[:-1]
+                                rcf.append(filename)
+                                prevl = None
 
-                        # Now skip until we get a close brace
-                        skipping = True
-                    else:
-                        prevl = s
-        else:
-            logger.debug(f&#39;No rcf {path}&#39;)
-            return None
+                            # Now skip until we get a close brace
+                            skipping = True
+                        else:
+                            prevl = s
+            else:
+                logger.debug(f&#34;No rcf {path}&#34;)
 
         # logger.debug(f&#39;Read rcf with { len(rcf) } entries&#39;)
 
@@ -699,6 +738,7 @@ class Engine:
 <dd>
 <div class="desc"><p>Try to parse a valve vdf file.
 Returning all key/value pairs it finds as string pairs.
+If no matching keys are found or we fail reading the file, an empty dict will be returned
 Note: this doesn't preserve hierarchy - only keys are checked</p></div>
 </dd>
 </dl>
@@ -770,16 +810,16 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
 
         # a dict from gameid -&gt; gameinfo for all installed games.  ONLY USED ON DESKTOP not DECKY
         self.all_games = None
-        self.account_id = 0
+        self.account_ids: set[int] = set()
         self.dry_run = False  # Set to true to suppress &#39;real&#39; writes to directories
         self.max_saves = 10  # default to a max of ten saves
 
         # don&#39;t generate backups if the files haven&#39;t changed since last backup
         self.ignore_unchanged = True
 
-    def set_account_id(self, id_num: int):
+    def add_account_id(self, id_num: int):
         logger.debug(f&#39;Setting account id { id_num } on { self }&#39;)
-        self.account_id = id_num
+        self.account_ids.add(id_num)
 
     &#34;&#34;&#34;Find the steam account ID for the current user (and)
 
@@ -787,14 +827,13 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
     eventually we could look at the config file in each of those dirs to see which one was touched most recently.
     &#34;&#34;&#34;
 
-    def auto_set_account_id(self) -&gt; int:
+    def auto_set_account_id(self) -&gt; list[int]:
         files = os.listdir(os.path.join(self.get_steam_root(), &#34;userdata&#34;))
         ids = list(filter(lambda i: i is not None, map(
             lambda f: int(f) if f.isnumeric() and f != &#34;0&#34; else None, files)))
-        assert len(ids) == 1  # Is there exactly one account dir?
-        id = ids[0]
-        self.set_account_id(id)
-        return id
+        for id in ids:
+            self.add_account_id(id)
+        return ids
 
     &#34;&#34;&#34;
     Return the saves directory path (creating it if necessary)
@@ -819,9 +858,14 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
     Return the path to the game directory for a specified game
     &#34;&#34;&#34;
 
-    def _get_gamedir(self, game_id: int) -&gt; str:
-        assert self.account_id  # better be set by now
-        return os.path.join(self.get_steam_root(), &#34;userdata&#34;, str(self.account_id), str(game_id))
+    def _get_gamedir(self, game_id: int) -&gt; list[str]:
+        assert len(self.account_ids) &gt; 0  # better be set by now
+        return [
+            os.path.join(
+                self.get_steam_root(), &#34;userdata&#34;, str(account_id), str(game_id)
+            )
+            for account_id in self.account_ids
+        ]
 
     &#34;&#34;&#34;return true if the game is installed on external storage
     &#34;&#34;&#34;
@@ -851,30 +895,39 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
         install_dir = vcf.get(&#34;installdir&#34;, None)
         return install_dir
 
+    &#34;&#34;&#34;get all library path based on libraryfolders.vdf file
+    &#34;&#34;&#34;
+
+    def _get_all_library(self) -&gt; list[str]:
+        steam_dir = self.get_steam_root()
+        app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
+        return _parse_libs(os.path.join(app_dir, &#34;libraryfolders.vdf&#34;))
+
     &#34;&#34;&#34;Return all games that can be found on this system (only used for python apps - when in Decky this comes from JS)
     &#34;&#34;&#34;
 
     def find_all_game_info(self) -&gt; list[dict]:
-        steam_dir = self.get_steam_root()
-        app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
-        files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
-                       and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
         r = []
         rdict = {}  # a dict from game id int to the gameinfo object
-        for f in files:
-            vcf = _parse_vcf(os.path.join(app_dir, f))
-            id = vcf.get(&#34;appid&#34;, None)
-            name = vcf.get(&#34;name&#34;, None)
-            if id and name:
-                id = int(id)
-                info = {
-                    # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
-                    &#34;install_root&#34;: steam_dir,
-                    &#34;game_id&#34;: id,
-                    &#34;game_name&#34;: name
-                }
-                r.append(info)
-                rdict[id] = info
+        for steam_dir in self._get_all_library():
+            app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
+            files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
+                           and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
+
+            for f in files:
+                vcf = _parse_vcf(os.path.join(app_dir, f))
+                id = vcf.get(&#34;appid&#34;, None)
+                name = vcf.get(&#34;name&#34;, None)
+                if id and name:
+                    id = int(id)
+                    info = {
+                        # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
+                        &#34;install_root&#34;: steam_dir,
+                        &#34;game_id&#34;: id,
+                        &#34;game_name&#34;: name,
+                    }
+                    r.append(info)
+                    rdict[id] = info
 
         self.all_games = rdict
         return r
@@ -997,15 +1050,24 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
     &#34;&#34;&#34;
 
     def _find_save_games(self, game_info, rcf: list[str]) -&gt; str:
-        d = self._get_gamedir(game_info[&#34;game_id&#34;])
+        dirs = self._get_gamedir(game_info[&#34;game_id&#34;])
 
-        # First check to see if the game uses the &#39;new&#39; &#34;remote&#34; directory approach to save files (i.e. they used the steam backup API from the app)
-        fullRemotes = (os.path.join(d, x)
-                       for x in [&#34;remote&#34;, os.path.join(&#34;ac&#34;, &#34;LinuxXdgDataHome&#34;)])
-        remoteFound = next((x for x in fullRemotes if os.path.isdir(x)), None)
-        if remoteFound:
-            # Store the savegames directory for this game
-            return remoteFound
+        for d in dirs:
+            # First check to see if the game uses the &#39;new&#39; &#34;remote&#34; directory approach to save files (i.e. they used the steam backup API from the app)
+            fullRemotes = (
+                os.path.join(d, x)
+                for x in [&#34;remote&#34;, os.path.join(&#34;ac&#34;, &#34;LinuxXdgDataHome&#34;)]
+            )
+            remoteFound = next(
+                (x for x in fullRemotes if os.path.isdir(x)), None)
+            if remoteFound:
+                # Store the savegames directory for this game
+                return remoteFound
+
+        # finding saves only work if we have already found the installdir for this game...
+        if not self._parse_installdir(game_info):
+            logger.error(f&#34;Invalid game_info, not installdir { game_info }&#34;)
+            return None
 
         # okay - now check the standard doc roots for games - do this before looking for autoclouds because it is more often the match
         d = self._search_likely_locations(game_info, rcf)
@@ -1050,42 +1112,42 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
     &#34;&#34;&#34;
 
     def _read_rcf(self, game_info: dict) -&gt; list[str]:
-        d = self._get_gamedir(game_info[&#34;game_id&#34;])
-        path = os.path.join(d, &#34;remotecache.vdf&#34;)
+        dirs = self._get_gamedir(game_info[&#34;game_id&#34;])
+        paths = [os.path.join(d, &#34;remotecache.vdf&#34;) for d in dirs]
         # logger.debug(f&#39;Read rcf {path}&#39;)
 
         rcf = []
-        if os.path.isfile(path):
-            with open(path) as f:
-                s = f.read()  # read full file as a string
-                lines = s.split(&#39;\n&#39;)
-                # logger.debug(f&#39;file is {lines}&#39;)
+        for path in paths:
+            if os.path.isfile(path):
+                with open(path) as f:
+                    s = f.read()  # read full file as a string
+                    lines = s.split(&#34;\n&#34;)
+                    # logger.debug(f&#39;file is {lines}&#39;)
 
-                # drop first two lines because they are &#34;gameid&#34; {
-                lines = lines[2:]
-                # We look for lines containing quotes and immediately preceeding lines with just an open brace
-                prevl = None
+                    # drop first two lines because they are &#34;gameid&#34; {
+                    lines = lines[2:]
+                    # We look for lines containing quotes and immediately preceeding lines with just an open brace
+                    prevl = None
 
-                skipping = False
-                for l in lines:
-                    s = l.strip()
-                    if skipping:  # skip the contents of {} records
-                        if s == &#34;}&#34;:
-                            skipping = False
-                    elif s == &#34;{&#34;:
-                        if prevl:
-                            # prevl will have quote chars as first and last of string.  Remove them
-                            filename = (prevl[1:])[:-1]
-                            rcf.append(filename)
-                            prevl = None
+                    skipping = False
+                    for l in lines:
+                        s = l.strip()
+                        if skipping:  # skip the contents of {} records
+                            if s == &#34;}&#34;:
+                                skipping = False
+                        elif s == &#34;{&#34;:
+                            if prevl:
+                                # prevl will have quote chars as first and last of string.  Remove them
+                                filename = (prevl[1:])[:-1]
+                                rcf.append(filename)
+                                prevl = None
 
-                        # Now skip until we get a close brace
-                        skipping = True
-                    else:
-                        prevl = s
-        else:
-            logger.debug(f&#39;No rcf {path}&#39;)
-            return None
+                            # Now skip until we get a close brace
+                            skipping = True
+                        else:
+                            prevl = s
+            else:
+                logger.debug(f&#34;No rcf {path}&#34;)
 
         # logger.debug(f&#39;Read rcf with { len(rcf) } entries&#39;)
 
@@ -1364,8 +1426,8 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
 </details>
 <h3>Methods</h3>
 <dl>
-<dt id="steamback.Engine.auto_set_account_id"><code class="name flex">
-<span>def <span class="ident">auto_set_account_id</span></span>(<span>self) ‑> int</span>
+<dt id="steamback.Engine.add_account_id"><code class="name flex">
+<span>def <span class="ident">add_account_id</span></span>(<span>self, id_num: int)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1373,14 +1435,27 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def auto_set_account_id(self) -&gt; int:
+<pre><code class="python">def add_account_id(self, id_num: int):
+    logger.debug(f&#39;Setting account id { id_num } on { self }&#39;)
+    self.account_ids.add(id_num)</code></pre>
+</details>
+</dd>
+<dt id="steamback.Engine.auto_set_account_id"><code class="name flex">
+<span>def <span class="ident">auto_set_account_id</span></span>(<span>self) ‑> list[int]</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def auto_set_account_id(self) -&gt; list[int]:
     files = os.listdir(os.path.join(self.get_steam_root(), &#34;userdata&#34;))
     ids = list(filter(lambda i: i is not None, map(
         lambda f: int(f) if f.isnumeric() and f != &#34;0&#34; else None, files)))
-    assert len(ids) == 1  # Is there exactly one account dir?
-    id = ids[0]
-    self.set_account_id(id)
-    return id</code></pre>
+    for id in ids:
+        self.add_account_id(id)
+    return ids</code></pre>
 </details>
 </dd>
 <dt id="steamback.Engine.do_backup"><code class="name flex">
@@ -1462,26 +1537,27 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def find_all_game_info(self) -&gt; list[dict]:
-    steam_dir = self.get_steam_root()
-    app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
-    files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
-                   and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
     r = []
     rdict = {}  # a dict from game id int to the gameinfo object
-    for f in files:
-        vcf = _parse_vcf(os.path.join(app_dir, f))
-        id = vcf.get(&#34;appid&#34;, None)
-        name = vcf.get(&#34;name&#34;, None)
-        if id and name:
-            id = int(id)
-            info = {
-                # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
-                &#34;install_root&#34;: steam_dir,
-                &#34;game_id&#34;: id,
-                &#34;game_name&#34;: name
-            }
-            r.append(info)
-            rdict[id] = info
+    for steam_dir in self._get_all_library():
+        app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
+        files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
+                       and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
+
+        for f in files:
+            vcf = _parse_vcf(os.path.join(app_dir, f))
+            id = vcf.get(&#34;appid&#34;, None)
+            name = vcf.get(&#34;name&#34;, None)
+            if id and name:
+                id = int(id)
+                info = {
+                    # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
+                    &#34;install_root&#34;: steam_dir,
+                    &#34;game_id&#34;: id,
+                    &#34;game_name&#34;: name,
+                }
+                r.append(info)
+                rdict[id] = info
 
     self.all_games = rdict
     return r</code></pre>
@@ -1559,20 +1635,6 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
     return self.config.steam_dir</code></pre>
 </details>
 </dd>
-<dt id="steamback.Engine.set_account_id"><code class="name flex">
-<span>def <span class="ident">set_account_id</span></span>(<span>self, id_num: int)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def set_account_id(self, id_num: int):
-    logger.debug(f&#39;Setting account id { id_num } on { self }&#39;)
-    self.account_id = id_num</code></pre>
-</details>
-</dd>
 </dl>
 </dd>
 </dl>
@@ -1609,6 +1671,7 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
 <li>
 <h4><code><a title="steamback.Engine" href="#steamback.Engine">Engine</a></code></h4>
 <ul class="two-column">
+<li><code><a title="steamback.Engine.add_account_id" href="#steamback.Engine.add_account_id">add_account_id</a></code></li>
 <li><code><a title="steamback.Engine.auto_set_account_id" href="#steamback.Engine.auto_set_account_id">auto_set_account_id</a></code></li>
 <li><code><a title="steamback.Engine.do_backup" href="#steamback.Engine.do_backup">do_backup</a></code></li>
 <li><code><a title="steamback.Engine.do_restore" href="#steamback.Engine.do_restore">do_restore</a></code></li>
@@ -1616,7 +1679,6 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
 <li><code><a title="steamback.Engine.find_supported" href="#steamback.Engine.find_supported">find_supported</a></code></li>
 <li><code><a title="steamback.Engine.get_saveinfos" href="#steamback.Engine.get_saveinfos">get_saveinfos</a></code></li>
 <li><code><a title="steamback.Engine.get_steam_root" href="#steamback.Engine.get_steam_root">get_steam_root</a></code></li>
-<li><code><a title="steamback.Engine.set_account_id" href="#steamback.Engine.set_account_id">set_account_id</a></code></li>
 </ul>
 </li>
 </ul>

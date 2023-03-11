@@ -85,8 +85,10 @@ def saveinfo_ago_str(si: dict) -&gt; str:
     return ts_str
 
 
-class GUI:
+status_watching_str = &#34;Status: Watching Steam for game exit...&#34;
 
+
+class GUI:
     def __init__(self, root: Tk, e: Engine):
         self.root = root
         self.engine = e
@@ -141,7 +143,7 @@ class GUI:
 
         # Define a label for the list.
         self.status = ttk.Label(
-            root, text=&#34;Status: Watching Steam for game exit...&#34;)
+            root, text=status_watching_str)
 
         # List supported games
         treev = ttk.Treeview(root,
@@ -202,7 +204,7 @@ class GUI:
         treev.column(&#34;name&#34;, minwidth=char_width * 10,
                      width=char_width * 30, stretch=YES)
         treev.column(&#34;time&#34;, minwidth=char_width * 6,
-                     width=char_width * 15, stretch=NO)
+                     width=char_width * 17, stretch=NO)
 
         treev.bind(&#34;&lt;&lt;TreeviewSelect&gt;&gt;&#34;, self.on_savegame_selected)
 
@@ -318,7 +320,11 @@ class GUI:
     &#34;&#34;&#34;Look for steam changes, and then queue up looking again&#34;&#34;&#34;
     async def watch_steam(self):
         # self.engine.ignore_unchanged = False  # for testing
-        backups = await self.watcher.check_once()
+        result = await self.watcher.check_once()
+        backups = result.backed_up
+
+        if result.game_started:
+            self.set_status(status_watching_str)
 
         if (len(backups) &gt; 0):
             si = backups[0]  # only print for first one (the common case)
@@ -508,7 +514,6 @@ def run(e: Engine):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class GUI:
-
     def __init__(self, root: Tk, e: Engine):
         self.root = root
         self.engine = e
@@ -563,7 +568,7 @@ def run(e: Engine):
 
         # Define a label for the list.
         self.status = ttk.Label(
-            root, text=&#34;Status: Watching Steam for game exit...&#34;)
+            root, text=status_watching_str)
 
         # List supported games
         treev = ttk.Treeview(root,
@@ -624,7 +629,7 @@ def run(e: Engine):
         treev.column(&#34;name&#34;, minwidth=char_width * 10,
                      width=char_width * 30, stretch=YES)
         treev.column(&#34;time&#34;, minwidth=char_width * 6,
-                     width=char_width * 15, stretch=NO)
+                     width=char_width * 17, stretch=NO)
 
         treev.bind(&#34;&lt;&lt;TreeviewSelect&gt;&gt;&#34;, self.on_savegame_selected)
 
@@ -740,7 +745,11 @@ def run(e: Engine):
     &#34;&#34;&#34;Look for steam changes, and then queue up looking again&#34;&#34;&#34;
     async def watch_steam(self):
         # self.engine.ignore_unchanged = False  # for testing
-        backups = await self.watcher.check_once()
+        result = await self.watcher.check_once()
+        backups = result.backed_up
+
+        if result.game_started:
+            self.set_status(status_watching_str)
 
         if (len(backups) &gt; 0):
             si = backups[0]  # only print for first one (the common case)
@@ -973,7 +982,11 @@ def run(e: Engine):
 </summary>
 <pre><code class="python">async def watch_steam(self):
     # self.engine.ignore_unchanged = False  # for testing
-    backups = await self.watcher.check_once()
+    result = await self.watcher.check_once()
+    backups = result.backed_up
+
+    if result.game_started:
+        self.set_status(status_watching_str)
 
     if (len(backups) &gt; 0):
         si = backups[0]  # only print for first one (the common case)
