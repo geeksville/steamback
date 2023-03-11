@@ -172,8 +172,13 @@ class Engine:
         rdict = {}  # a dict from game id int to the gameinfo object
         for steam_dir in self._get_all_library():
             app_dir = os.path.join(steam_dir, "steamapps")
-            files = filter(lambda f: f.startswith("appmanifest_")
-                           and f.endswith(".acf"), os.listdir(app_dir))
+            files = []  # default to assume no files
+            try:
+                files = filter(lambda f: f.startswith("appmanifest_")
+                               and f.endswith(".acf"), os.listdir(app_dir))
+            except Exception as e:
+                logger.warning(
+                    f'Skipping invalid library directory { app_dir } due to { e }')
 
             for f in files:
                 vcf = _parse_vcf(os.path.join(app_dir, f))
