@@ -15,12 +15,14 @@ args = None
 def main():
     """Perform command line steamback operations"""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--debug", help="Show debug log messages",
+    parser.add_argument("--debug", "-d", help="Show debug log messages",
                         action="store_true")
-    parser.add_argument("--test", help="Run integration code test",
+    parser.add_argument("--test", "-t", help="Run integration code test",
                         action="store_true")
-    parser.add_argument("--daemon", help="Run as a daemon that just looks for games to backup",
+    parser.add_argument("--daemon", "-D", help="Run as a daemon that just looks for games to backup",
                         action="store_true")
+    parser.add_argument("--steampath", "-s",
+                        help="Ignores auto detection and force a specific Steam path")
 
     global args
     args = parser.parse_args()
@@ -51,6 +53,9 @@ def main():
             "~"), ".local", "share", "Steam")
         steam_dir = steam_deck_dir if os.path.exists(steam_deck_dir) else os.path.join(os.path.expanduser(
             "~"), ".steam", "debian-installation")  # the default case
+    if args.steampath is not None:
+        steam_dir = args.steampath if os.path.isabs(
+            args.steampath) else os.path.abspath(args.steampath)
 
     if not os.path.exists(steam_dir):
         logger.error(
