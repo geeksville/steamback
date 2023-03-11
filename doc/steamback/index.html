@@ -200,8 +200,13 @@ class Engine:
         rdict = {}  # a dict from game id int to the gameinfo object
         for steam_dir in self._get_all_library():
             app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
-            files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
-                           and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
+            files = []  # default to assume no files
+            try:
+                files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
+                               and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
+            except Exception as e:
+                logger.warning(
+                    f&#39;Skipping invalid library directory { app_dir } due to { e }&#39;)
 
             for f in files:
                 vcf = _parse_vcf(os.path.join(app_dir, f))
@@ -911,8 +916,13 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
         rdict = {}  # a dict from game id int to the gameinfo object
         for steam_dir in self._get_all_library():
             app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
-            files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
-                           and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
+            files = []  # default to assume no files
+            try:
+                files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
+                               and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
+            except Exception as e:
+                logger.warning(
+                    f&#39;Skipping invalid library directory { app_dir } due to { e }&#39;)
 
             for f in files:
                 vcf = _parse_vcf(os.path.join(app_dir, f))
@@ -1541,8 +1551,13 @@ Note: this doesn't preserve hierarchy - only keys are checked</p></div>
     rdict = {}  # a dict from game id int to the gameinfo object
     for steam_dir in self._get_all_library():
         app_dir = os.path.join(steam_dir, &#34;steamapps&#34;)
-        files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
-                       and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
+        files = []  # default to assume no files
+        try:
+            files = filter(lambda f: f.startswith(&#34;appmanifest_&#34;)
+                           and f.endswith(&#34;.acf&#34;), os.listdir(app_dir))
+        except Exception as e:
+            logger.warning(
+                f&#39;Skipping invalid library directory { app_dir } due to { e }&#39;)
 
         for f in files:
             vcf = _parse_vcf(os.path.join(app_dir, f))
