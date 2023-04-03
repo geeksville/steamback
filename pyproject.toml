@@ -18,7 +18,7 @@ dependencies = [
     "async-tkinter-loop ~= 0.7.0",
     "sv-ttk ~= 2.4",
     "timeago ~= 1.0.16",
-    "Pillow >= 9.2,< 9.5"
+    "Pillow >= 9.2,< 9.6"
 ]
 
 [tool.setuptools]
