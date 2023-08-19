@@ -651,6 +651,9 @@ class Engine:
             try:
                 # logger.debug(f'try_rcf { info }')
                 return self._read_rcf(info)
+            except FileNotFoundError as e:
+                logger.warning(f'RCF file not found in scan of {info}, probably an unmounted SD card')
+                return None
             except Exception as e:
                 logger.error(
                     f'Error scanning rcf for {info}, exception { traceback.format_exc() }')
