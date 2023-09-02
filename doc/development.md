@@ -37,3 +37,6 @@ python3 -m pip install --upgrade build
 python3 -m build
 ```
 
+## If you are developing for Steam Deck (Decky Loader)
+
+Good tips [here](https://wiki.deckbrew.xyz/en/plugin-dev/cef-debugging).

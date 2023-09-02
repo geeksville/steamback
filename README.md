@@ -6,7 +6,7 @@ Steamback is a plugin for [decky-loader](https://deckbrew.xyz/).  It adds automa
 
 These snapshots allow you to 'rewind' to previous save-game versions.  This is particularly useful if your game only offers one save-game and (like me) are a poor game player and you want to rewind to the version from yesterday or last week.
 
-This plug-in is currently in beta-testing.  Please check for updates to the steamback plugin occasionally.  If you see bugs, please file an [issue](https://github.com/geeksville/steamback/issues) at our github.
+If you see bugs, please file an [issue](https://github.com/geeksville/steamback/issues) at our github.
 
 ![Steamback settings](doc/screenshot.jpeg)
 
