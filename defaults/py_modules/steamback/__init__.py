@@ -8,6 +8,7 @@ import os
 import shutil
 import logging
 import traceback
+import glob
 from pathlib import Path
 
 
@@ -227,7 +228,7 @@ class Engine:
         # we want the directories that contained the autocloud
         dirs = list(map(lambda f: str(f.parent), files))
 
-        # logger.debug(f'Autoclouds in { root_dir } are { dirs }')
+        logger.debug(f'Autoclouds in { root_dir } are { dirs }')
         return dirs
 
     """
@@ -277,10 +278,10 @@ class Engine:
         return os.path.normpath(autocloud)
 
     """
-    Look in the likely locations for savegame files (per the rcf list). return that path or None
+    Look in the likely locations for savegame files (per the rcf list). return a (possibly empty) list of paths
     """
 
-    def _search_likely_locations(self, game_info: dict, rcf: list[str]) -> str:
+    def _search_likely_locations(self, game_info: dict, rcf: list[str]) -> list[str]:
         roots = []
 
         def addRoots(is_system_dir: bool):
@@ -304,40 +305,40 @@ class Engine:
         addRoots(False)
 
         logger.debug(f'Searching roots { roots }')
+        foundDirs = []
         for r in roots:
             if self._rcf_is_valid(r, rcf):
-                return r
+                foundDirs.append(r)
 
-        return None
+        return foundDirs
 
     """
-    Try to figure out where this game stores its save files. return that path or None
+    Try to figure out where this game stores its save files. return a (possibly empty) list of candidate directories we found
     """
 
-    def _find_save_games(self, game_info, rcf: list[str]) -> str:
+    def _find_save_games(self, game_info, rcf: list[str]) -> list[str]:
         dirs = self._get_gamedir(game_info["game_id"])
 
+        foundDirs = []
         for d in dirs:
             # First check to see if the game uses the 'new' "remote" directory approach to save files (i.e. they used the steam backup API from the app)
             fullRemotes = (
                 os.path.join(d, x)
                 for x in ["remote", os.path.join("ac", "LinuxXdgDataHome")]
             )
-            remoteFound = next(
-                (x for x in fullRemotes if os.path.isdir(x)), None)
-            if remoteFound:
-                # Store the savegames directory for this game
-                return remoteFound
+            remotesFound = (x for x in fullRemotes if os.path.isdir(x))
+
+            # Store the savegames directory for this game
+            foundDirs.extend(remotesFound)
 
         # finding saves only work if we have already found the installdir for this game...
         if not self._parse_installdir(game_info):
             logger.error(f"Invalid game_info, not installdir { game_info }")
-            return None
+            return foundDirs
 
         # okay - now check the standard doc roots for games - do this before looking for autoclouds because it is more often the match
-        d = self._search_likely_locations(game_info, rcf)
-        if (d):
-            return d
+        likely = self._search_likely_locations(game_info, rcf)
+        foundDirs.extend(likely)
 
         # Alas, now we need to scan the install dir to look for steam_autocloud.vdf files.  If found that means the dev is doing the 'lazy'
         # way of just saying "backup all files due to some path we enter in our web admin console".
@@ -346,14 +347,25 @@ class Engine:
         autoclouds = self._find_autoclouds(game_info, is_linux_game=True)
 
         # Not found on linux, try looking in windows
-        if not autoclouds:
+        if len(autoclouds) < 1:
             autoclouds = self._find_autoclouds(game_info, is_linux_game=False)
 
-        # If no/multiple autocloud files are found, just search in the root and see if that works
-        if not autoclouds or len(autoclouds) != 1:
-            return None
+        # Convert the autocloud file locations to the correct file root location for backup/restore (based on paths mentioned in the rcf file)
+        # FIXME, I don't know the python equivalent of flatmap.
+        autoRoots = []
+        for f in autoclouds:
+            r = self._find_save_root_from_autoclouds(game_info, rcf, f)
+            if r:
+                logger.debug(
+                    f"Mapping autocloud { f } to { r } root directory")
+                autoRoots.append(r)
 
-        return self._find_save_root_from_autoclouds(game_info, rcf, autoclouds[0])
+        # Add the autocloud dirs to the simple directories we found
+        foundDirs.extend(autoRoots)
+
+        # remove any duplicates (by briefly converting into a dict, which preserves order)
+        foundDirs = list(dict.fromkeys(foundDirs))
+        return foundDirs
 
     """ 
     confirm that at least one savegame exists, to validate our assumptions about where they are being stored
@@ -414,24 +426,33 @@ class Engine:
             else:
                 logger.debug(f"No rcf {path}")
 
-        # logger.debug(f'Read rcf with { len(rcf) } entries')
+        logger.debug(f'Read rcf with { len(rcf) } entries')
 
         # If we haven't already found where the savegames for this app live, do so now (or fail if not findable)
-        if not "save_games_root" in game_info:
-            saveRoot = self._find_save_games(game_info, rcf)
-            if not saveRoot:
+        if not "save_games_roots" in game_info:
+            saveRoots = self._find_save_games(game_info, rcf)
+            if len(saveRoots) < 1:
                 logger.warning(
                     f'Unable to backup { game_info }: not yet supported')
                 return None
-            else:
-                game_info["save_games_root"] = saveRoot
 
-        # confirm that at least one savegame exists, to validate our assumptions about where they are being stored
-        # if no savegame found claim we can't back this app up.
-        if not self._rcf_is_valid(game_info["save_games_root"], rcf):
-            logger.debug(
-                f'RCF seems invalid, not backing up { game_info }')
-            return None
+            # remove save_game roots which don't seem to match any filenames in the existing rcf data from valve
+            # confirm that at least one savegame exists, to validate our assumptions about where they are being stored
+            # if no savegame found claim we can't back this app up.
+            saveRoots = list(
+                filter(lambda root: self._rcf_is_valid(root, rcf), saveRoots))
+            if len(saveRoots) < 1:
+                logger.warning(
+                    f'RCF seems invalid, not backing up { game_info }')
+                return None
+
+            # For legacy purposes, use the first found entry as save_games_root, we store this as a dict mapping
+            # directory name in game to the suffix used on our backup dir.  To keep compatibility with old rev1
+            # steamback we use emptystring for the first found root and _n for everyone after.
+            rootsDict = {}
+            for idx, dir in enumerate(saveRoots):
+                rootsDict[dir] = "" if idx == 0 else f"_{ idx }"
+            game_info["save_games_roots"] = rootsDict
 
         # logger.debug(f'rcf files are {r}')
         return rcf
@@ -439,11 +460,11 @@ class Engine:
     """Get the root directory this game uses for its save files
     """
 
-    def _get_game_root(self, game_info: dict) -> str:
-        return game_info["save_games_root"]
+    def _get_game_roots(self, game_info: dict) -> dict:
+        return game_info["save_games_roots"]
 
     """
-    Parse valve rcf json objects and copy named files
+    Parse valve rcf json objects and copy named files.  Given one particular source and one particular dest directory
 
     {
 	"ChangeNumber"		"-6703994677807818784"
@@ -483,12 +504,10 @@ class Engine:
             f'Copied { numCopied } files from { src_dir } to { dest_dir }')
 
     """
-    Find the timestamp of the most recently updated file in a rcf
+    Find the timestamp of the most recently updated file in a directory
     """
 
-    def _get_rcf_timestamp(self, rcf: list, game_info: dict) -> int:
-        src_dir = self._get_game_root(game_info)
-
+    def _get_directory_timestamp(self, rcf: list, src_dir: str) -> int:
         # Get full paths to existing files mentioned in rcf.
         paths = map(lambda k: os.path.join(src_dir, k), rcf)
         full = list(filter(lambda p: os.path.exists(p), paths))
@@ -498,13 +517,28 @@ class Engine:
         return max_time
 
     """
+    Find the timestamp of the most recently updated file in a rcf
+    """
+
+    def _get_rcf_timestamp(self, rcf: list, game_info: dict) -> int:
+        src_dirs = self._get_game_roots(game_info).keys()
+
+        # for each directory, get the max time, then find the max of those times
+        dir_times = map(
+            lambda dir: self._get_directory_timestamp(rcf, dir), src_dirs)
+        max_time = max(dir_times)
+
+        return max_time
+
+    """
     Create a save file directory save-GAMEID-timestamp and return SaveInfo object
     Also write the sister save-GAMEID-timestamp.json metadata file
     """
 
     def _create_savedir(self, game_info: dict, is_undo: bool = False) -> dict:
         game_id = game_info["game_id"]
-        assert game_info["save_games_root"]  # This better be populated by now!
+        # This better be populated by now!
+        assert game_info["save_games_roots"]
         ts = int(round(time.time() * 1000))  # msecs since 1970
 
         si = {
@@ -515,11 +549,10 @@ class Engine:
         }
 
         path = self._saveinfo_to_dir(si)
-        # logger.debug(f'Creating savedir {path}, {si}')
+        logger.debug(f'Creating savedir JSON {path}, {si}')
         if not self.dry_run:
-            os.makedirs(path, exist_ok=True)
             with open(path + ".json", 'w') as fp:
-                json.dump(si, fp)
+                json.dump(si, fp, indent=1)
 
         return si
 
@@ -530,20 +563,46 @@ class Engine:
     def _file_to_saveinfo(self, filename: str) -> dict:
         dir = self._get_savesdir()
         with open(os.path.join(dir, filename)) as j:
-            si = json.load(j)
-            # logger.debug(f'Parsed filename {filename} as {si}')
+            try:
+                si = json.load(j)
+                # logger.debug(f'Parsed filename {filename} as {si}')
+
+                # convert old pre version 2 files to have valid metadata
+                gi = si["game_info"]
+                if "save_games_roots" not in gi:
+                    logger.warning(f"Saveinfo is old format, upgrading...")
+                    gi["save_games_roots"] = {gi["save_games_root"]: ""}
+                    del gi["save_games_root"]
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f'Corrupted JSON for {f}, attempting delete of bad json file, {e}')
+                try:
+                    os.remove(j)
+                except OSError:
+                    pass
+                raise  # still call this a failure for the parent to deal with.  The next time they scan the bogus JSON will be gone
             return si
 
     """ delete the savedir and associated json
     """
 
     def _delete_savedir(self, filename):
-        shutil.rmtree(os.path.join(
-            self._get_savesdir(), filename), ignore_errors=True)
-        try:
-            os.remove(os.path.join(self._get_savesdir(), filename + ".json"))
-        except OSError:
-            pass
+        root = self._get_savesdir()
+
+        # Make sure saves dir is a valid absolute path before we start doing dangerous things
+        assert root[0] == '/'
+
+        filepath = os.path.join(root, filename) + "*"
+        files = glob.glob(filepath)
+        for f in files:
+            logger.debug(f'Deleting {f}')
+            try:
+                if os.path.isfile(f):
+                    os.remove(f)
+                elif os.path.isdir(f):
+                    shutil.rmtree(f, ignore_errors=True)
+            except OSError:
+                pass
 
     """
     we keep only the most recent undo and the most recent 10 saves
@@ -584,6 +643,37 @@ class Engine:
         return newest
 
     """
+    Copy all savegame info from the game into our mirror (might have multiple save root directories)
+    """
+
+    def _copy_all_to_saveinfo(self, save_info: dict, rcf: list[str]):
+        try:
+            game_info = save_info["game_info"]
+            dest_basename = self._saveinfo_to_dir(save_info)
+            gameRoots = self._get_game_roots(game_info)
+            for src_dir, suffix in gameRoots.items():
+                dest_dir = dest_basename + suffix
+                # logger.debug(f'copying gamedir { src_dir } to { dest_dir }')
+                self._copy_by_rcf(rcf, src_dir, dest_dir)
+        except:
+            # Don't keep old directory/json around if we encounter an exception
+            self._delete_savedir(saveInfo["filename"])
+            raise  # rethrow
+
+    """
+    Copy all savegame info from our mirror into the game
+    """
+
+    def _copy_all_from_saveinfo(self, save_info: dict, rcf: list[str]):
+        game_info = save_info["game_info"]
+        mirror_basename = self._saveinfo_to_dir(save_info)
+        gameRoots = self._get_game_roots(game_info)
+        for dest_dir, suffix in gameRoots.items():
+            src_dir = mirror_basename + suffix
+            # logger.debug(f'copying backup dir { src_dir } to { dest_dir }')
+            self._copy_by_rcf(rcf, src_dir, dest_dir)
+
+    """
     Backup a particular game.
 
     Returns a new SaveInfo object or None if no backup was needed or possible
@@ -607,14 +697,7 @@ class Engine:
                 return None
 
         saveInfo = self._create_savedir(game_info)
-        try:
-            gameDir = self._get_game_root(game_info)
-            # logger.info(f'got gamedir { gameDir }')
-            self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(saveInfo))
-        except:
-            # Don't keep old directory/json around if we encounter an exception
-            self._delete_savedir(saveInfo["filename"])
-            raise  # rethrow
+        self._copy_all_to_saveinfo(saveInfo, rcf)
 
         await self._cull_old_saves()
         return saveInfo
@@ -627,17 +710,16 @@ class Engine:
         game_info = save_info["game_info"]
         rcf = self._read_rcf(game_info)
         assert rcf
-        gameDir = self._get_game_root(game_info)
 
         # first make the backup (unless restoring from an undo already)
         if not save_info["is_undo"]:
             logger.info('Generating undo files')
             undoInfo = self._create_savedir(game_info, is_undo=True)
-            self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(undoInfo))
+            self._copy_all_to_saveinfo(undoInfo, rcf)
 
         # then restore from our old snapshot
         logger.info(f'Attempting restore of { save_info }')
-        self._copy_by_rcf(rcf, self._saveinfo_to_dir(save_info), gameDir)
+        self._copy_all_from_saveinfo(save_info, rcf)
 
         # we now might have too many undos, so possibly delete one
         await self._cull_old_saves()
@@ -652,7 +734,8 @@ class Engine:
                 # logger.debug(f'try_rcf { info }')
                 return self._read_rcf(info)
             except FileNotFoundError as e:
-                logger.warning(f'RCF file not found in scan of {info}, probably an unmounted SD card')
+                logger.warning(
+                    f'RCF file not found in scan of {info}, probably an unmounted SD card')
                 return None
             except Exception as e:
                 logger.error(

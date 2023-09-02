@@ -42,7 +42,9 @@
             "request": "launch",
             "module": "py_modules.steamback",
             "justMyCode": true,
-            "args": []
+            "args": [
+                "--debug"
+            ]
         },
         {
             "name": "Debug desktop gui",
