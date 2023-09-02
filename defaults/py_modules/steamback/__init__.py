@@ -563,8 +563,17 @@ class Engine:
     def _file_to_saveinfo(self, filename: str) -> dict:
         dir = self._get_savesdir()
         with open(os.path.join(dir, filename)) as j:
-            si = json.load(j)
-            logger.debug(f'Parsed filename {filename} as {si}')
+            try:
+                si = json.load(j)
+                logger.debug(f'Parsed filename {filename} as {si}')
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f'Corrupted JSON for {f}, attempting delete of bad json file, {e}')
+                try:
+                    os.remove(j)
+                except OSError:
+                    pass
+                return None
             return si
 
     """ delete the savedir and associated json
