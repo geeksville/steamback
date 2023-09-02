@@ -8,6 +8,7 @@ import os
 import shutil
 import logging
 import traceback
+import glob
 from pathlib import Path
 
 
@@ -548,9 +549,8 @@ class Engine:
         }
 
         path = self._saveinfo_to_dir(si)
-        logger.debug(f'Creating savedir {path}, {si}')
+        logger.debug(f'Creating savedir JSON {path}, {si}')
         if not self.dry_run:
-            os.makedirs(path, exist_ok=True)
             with open(path + ".json", 'w') as fp:
                 json.dump(si, fp, indent=1)
 
@@ -565,7 +565,7 @@ class Engine:
         with open(os.path.join(dir, filename)) as j:
             try:
                 si = json.load(j)
-                logger.debug(f'Parsed filename {filename} as {si}')
+                # logger.debug(f'Parsed filename {filename} as {si}')
             except json.JSONDecodeError as e:
                 logger.error(
                     f'Corrupted JSON for {f}, attempting delete of bad json file, {e}')
@@ -573,19 +573,29 @@ class Engine:
                     os.remove(j)
                 except OSError:
                     pass
-                return None
+                raise  # still call this a failure for the parent to deal with.  The next time they scan the bogus JSON will be gone
             return si
 
     """ delete the savedir and associated json
     """
 
     def _delete_savedir(self, filename):
-        shutil.rmtree(os.path.join(
-            self._get_savesdir(), filename), ignore_errors=True)
-        try:
-            os.remove(os.path.join(self._get_savesdir(), filename + ".json"))
-        except OSError:
-            pass
+        root = self._get_savesdir()
+
+        # Make sure saves dir is a valid absolute path before we start doing dangerous things
+        assert root[0] == '/'
+
+        filepath = os.path.join(root, filename) + "*"
+        files = glob.glob(filepath)
+        for f in files:
+            logger.debug(f'Deleting {f}')
+            try:
+                if os.path.isfile(f):
+                    os.remove(f)
+                elif os.path.isdir(f):
+                    shutil.rmtree(f, ignore_errors=True)
+            except OSError:
+                pass
 
     """
     we keep only the most recent undo and the most recent 10 saves
@@ -626,6 +636,37 @@ class Engine:
         return newest
 
     """
+    Copy all savegame info from the game into our mirror (might have multiple save root directories)
+    """
+
+    def _copy_all_to_saveinfo(self, save_info: dict, rcf: list[str]):
+        try:
+            game_info = save_info["game_info"]
+            dest_basename = self._saveinfo_to_dir(save_info)
+            gameRoots = self._get_game_roots(game_info)
+            for src_dir, suffix in gameRoots.items():
+                dest_dir = dest_basename + suffix
+                logger.debug(f'copying gamedir { src_dir } to { dest_dir }')
+                self._copy_by_rcf(rcf, src_dir, dest_dir)
+        except:
+            # Don't keep old directory/json around if we encounter an exception
+            self._delete_savedir(saveInfo["filename"])
+            raise  # rethrow
+
+    """
+    Copy all savegame info from our mirror into the game
+    """
+
+    def _copy_all_from_saveinfo(self, save_info: dict, rcf: list[str]):
+        game_info = save_info["game_info"]
+        mirror_basename = self._saveinfo_to_dir(save_info)
+        gameRoots = self._get_game_roots(game_info)
+        for dest_dir, suffix in gameRoots.items():
+            src_dir = mirror_basename + suffix
+            logger.debug(f'copying backup dir { src_dir } to { dest_dir }')
+            self._copy_by_rcf(rcf, src_dir, dest_dir)
+
+    """
     Backup a particular game.
 
     Returns a new SaveInfo object or None if no backup was needed or possible
@@ -649,14 +690,7 @@ class Engine:
                 return None
 
         saveInfo = self._create_savedir(game_info)
-        try:
-            gameDir = self._get_game_root(game_info)
-            logger.debug(f'got gamedir { gameDir }')
-            self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(saveInfo))
-        except:
-            # Don't keep old directory/json around if we encounter an exception
-            self._delete_savedir(saveInfo["filename"])
-            raise  # rethrow
+        self._copy_all_to_saveinfo(saveInfo, rcf)
 
         await self._cull_old_saves()
         return saveInfo
@@ -669,17 +703,16 @@ class Engine:
         game_info = save_info["game_info"]
         rcf = self._read_rcf(game_info)
         assert rcf
-        gameDir = self._get_game_root(game_info)
 
         # first make the backup (unless restoring from an undo already)
         if not save_info["is_undo"]:
             logger.info('Generating undo files')
             undoInfo = self._create_savedir(game_info, is_undo=True)
-            self._copy_by_rcf(rcf, gameDir, self._saveinfo_to_dir(undoInfo))
+            self._copy_all_to_saveinfo(undoInfo, rcf)
 
         # then restore from our old snapshot
         logger.info(f'Attempting restore of { save_info }')
-        self._copy_by_rcf(rcf, self._saveinfo_to_dir(save_info), gameDir)
+        self._copy_all_from_saveinfo(save_info, rcf)
 
         # we now might have too many undos, so possibly delete one
         await self._cull_old_saves()
