@@ -566,6 +566,13 @@ class Engine:
             try:
                 si = json.load(j)
                 # logger.debug(f'Parsed filename {filename} as {si}')
+
+                # convert old pre version 2 files to have valid metadata
+                gi = si["game_info"]
+                if "save_games_roots" not in gi:
+                    logger.warning(f"Saveinfo is old format, upgrading...")
+                    gi["save_games_roots"] = {gi["save_games_root"]: ""}
+                    del gi["save_games_root"]
             except json.JSONDecodeError as e:
                 logger.error(
                     f'Corrupted JSON for {f}, attempting delete of bad json file, {e}')
@@ -646,7 +653,7 @@ class Engine:
             gameRoots = self._get_game_roots(game_info)
             for src_dir, suffix in gameRoots.items():
                 dest_dir = dest_basename + suffix
-                logger.debug(f'copying gamedir { src_dir } to { dest_dir }')
+                # logger.debug(f'copying gamedir { src_dir } to { dest_dir }')
                 self._copy_by_rcf(rcf, src_dir, dest_dir)
         except:
             # Don't keep old directory/json around if we encounter an exception
@@ -663,7 +670,7 @@ class Engine:
         gameRoots = self._get_game_roots(game_info)
         for dest_dir, suffix in gameRoots.items():
             src_dir = mirror_basename + suffix
-            logger.debug(f'copying backup dir { src_dir } to { dest_dir }')
+            # logger.debug(f'copying backup dir { src_dir } to { dest_dir }')
             self._copy_by_rcf(rcf, src_dir, dest_dir)
 
     """
