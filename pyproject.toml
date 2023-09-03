@@ -1,6 +1,6 @@
 [project]
 name = "steamback"
-version = "0.3.6"
+version = "1.0.0"
 authors = [
   { name="Kevin Hester", email="kevinh@geeksville.com" },
 ]

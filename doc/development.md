@@ -40,3 +40,5 @@ python3 -m build
 ## If you are developing for Steam Deck (Decky Loader)
 
 Good tips [here](https://wiki.deckbrew.xyz/en/plugin-dev/cef-debugging).
+
+cli/decky plugin build

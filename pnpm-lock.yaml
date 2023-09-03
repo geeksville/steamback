@@ -1,13 +1,10 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
 dependencies:
-  decky-frontend-lib:
-    specifier: ^3.21.1
-    version: 3.21.1
   javascript-time-ago:
     specifier: ^2.5.9
     version: 2.5.9
@@ -43,6 +40,9 @@ devDependencies:
   '@types/webpack':
     specifier: ^5.28.0
     version: 5.28.0
+  decky-frontend-lib:
+    specifier: ^3.22.0
+    version: 3.22.0
   rollup:
     specifier: ^2.77.1
     version: 2.77.1
@@ -447,9 +447,9 @@ packages:
     resolution: {integrity: sha512-uX1KG+x9h5hIJsaKR9xHUeUraxf8IODOwq9JLNPq6BwB04a/xgpq3rcx47l5BZu5zBPlgD342tdke3Hom/nJRA==}
     dev: true
 
-  /decky-frontend-lib@3.21.1:
-    resolution: {integrity: sha512-30605ET9qqZ6St6I9WmMmLGgSrTIdMwo7xy85+lRaF1miUd2icOGEJjwnbVcZDdkal+1fJ3tNEDXlchVfG4TrA==}
-    dev: false
+  /decky-frontend-lib@3.22.0:
+    resolution: {integrity: sha512-MJ0y0bhNMHJyMVxHht3O0L0GxdT9sckUmh35HG7/ERqyZQsfKpDqOeW6pC1R07SnuWwgbl4fY3tzjlrb7qUeoA==}
+    dev: true
 
   /deepmerge@4.2.2:
     resolution: {integrity: sha512-FJ3UgI4gIl+PHZm53knsuSFpE+nESMr7M4v9QcgB7S63Kj/6WqMiFQJpBBYz1Pt+66bZpP3Q7Lye0Oo9MPKEdg==}
@@ -531,8 +531,8 @@ packages:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
     dev: true
 
-  /fsevents@2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+  /fsevents@2.3.3:
+    resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
@@ -766,7 +766,7 @@ packages:
     engines: {node: '>=10.0.0'}
     hasBin: true
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /safe-buffer@5.2.1:
