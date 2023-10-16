@@ -26,7 +26,7 @@
   "homepage": "https://github.com/geeksville/steamback#readme",
   "devDependencies": {
     "decky-frontend-lib": "^3.22.0",
-    "@rollup/plugin-commonjs": "^21.1.0",
+    "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-replace": "^4.0.0",
