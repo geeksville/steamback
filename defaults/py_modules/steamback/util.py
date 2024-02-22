@@ -1,7 +1,7 @@
 import psutil
 import re
 import asyncio
-import os
+
 from typing import NamedTuple
 from . import Engine
 

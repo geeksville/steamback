@@ -429,7 +429,7 @@ class Engine:
         logger.debug(f'Read rcf with { len(rcf) } entries')
 
         # If we haven't already found where the savegames for this app live, do so now (or fail if not findable)
-        if not "save_games_roots" in game_info:
+        if "save_games_roots" not in game_info:
             saveRoots = self._find_save_games(game_info, rcf)
             if len(saveRoots) < 1:
                 logger.warning(
@@ -570,12 +570,12 @@ class Engine:
                 # convert old pre version 2 files to have valid metadata
                 gi = si["game_info"]
                 if "save_games_roots" not in gi:
-                    logger.warning(f"Saveinfo is old format, upgrading...")
+                    logger.warning("Saveinfo is old format, upgrading...")
                     gi["save_games_roots"] = {gi["save_games_root"]: ""}
                     del gi["save_games_root"]
             except json.JSONDecodeError as e:
                 logger.error(
-                    f'Corrupted JSON for {f}, attempting delete of bad json file, {e}')
+                    f'Corrupted JSON for {filename}, attempting delete of bad json file, {e}')
                 try:
                     os.remove(j)
                 except OSError:
@@ -657,7 +657,7 @@ class Engine:
                 self._copy_by_rcf(rcf, src_dir, dest_dir)
         except:
             # Don't keep old directory/json around if we encounter an exception
-            self._delete_savedir(saveInfo["filename"])
+            self._delete_savedir(save_info["filename"])
             raise  # rethrow
 
     """
@@ -733,11 +733,11 @@ class Engine:
             try:
                 # logger.debug(f'try_rcf { info }')
                 return self._read_rcf(info)
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 logger.warning(
                     f'RCF file not found in scan of {info}, probably an unmounted SD card')
                 return None
-            except Exception as e:
+            except Exception:
                 logger.error(
                     f'Error scanning rcf for {info}, exception { traceback.format_exc() }')
                 return None

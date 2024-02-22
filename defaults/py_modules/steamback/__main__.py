@@ -29,7 +29,7 @@ def main():
 
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
     logger = logging.getLogger()
-    logger.info(f'Steamback running...')
+    logger.info('Steamback running...')
 
     # FIXME - I bet the following will need tweaking for Windows
     plat_sys = platform.system()
