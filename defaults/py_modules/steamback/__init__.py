@@ -749,6 +749,23 @@ class Engine:
         return supported
 
     """
+    Given a list of directory names, return a list of directories that are actually mounted
+    """
+    async def find_mounted(self, dirs: list) -> list[str]:
+        # if we get any sort of exception while scanning a particular game info, keep trying the others
+        def try_mount(f):
+            try:
+                return os.path.exists(f)
+            except Exception:
+                logger.error(
+                    f'Error finding mount for {f}, exception { traceback.format_exc() }')
+                return None
+
+        mounted = list(filter(try_mount, dirs))
+        # logger.debug(f'find mount { dirs } -> { mounted }')
+        return mounted
+
+    """
     Return all available saves, newest save first and undo as the absolute first
 
     Returns an array of SaveInfo objects

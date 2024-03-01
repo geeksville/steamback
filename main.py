@@ -63,6 +63,12 @@ class Plugin:
         return await get_engine().find_supported(game_infos)
 
     """
+    Given a list of directory names, return a list of directories that are actually mounted
+    """
+    async def find_mounted(self, dirs: list) -> list[dict]:
+        return await get_engine().find_mounted(dirs)
+
+    """
     Return all available saves, newest save first and undo as the absolute first
 
     Returns an array of SaveInfo objects

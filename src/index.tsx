@@ -48,16 +48,37 @@ interface SaveInfo {
   is_undo: boolean
 }
 
+
+let gServerAPI: ServerAPI | undefined = undefined
+
+// Find the currently mounted game filesystems
+async function getMounted() {
+  const folders = await SteamClient.InstallFolder.GetInstallFolders() as any[]
+
+  //console.log("folder dirs", folders)
+  const r = await gServerAPI!.callPluginMethod("find_mounted", {
+    dirs: folders.map(f => f.strFolderPath)
+  })
+
+  if(!r.success) throw new Error('find_mounted failed')
+  const mounted = r.result as string[]
+
+  const filteredFolders = folders.filter(f => mounted.includes(f.strFolderPath))
+  //console.log("filtered dirs", filteredFolders)
+
+  return filteredFolders
+}
+
 /**
  * Generate a game_info object (which includes install_root) for the given game_id, or throw if not found
  * @param game_id 
  * @returns 
  */
 async function makeGameInfo(game_id: number): Promise<GameInfo> {
-  const folders = await SteamClient.InstallFolder.GetInstallFolders()
+  const folders = await getMounted()
   for (let f of folders) {
     const appIds = new Set<number>(f.vecApps.map((a: any) => a.nAppID))
-    // console.log("app set vs ", f.vecApps, appIds, game_id)
+    //console.log("app set vs ", f.vecApps, f.strFolderPath, appIds, game_id)
     if (appIds.has(game_id)) {
       const info: GameInfo = {
         game_id: game_id,
@@ -68,7 +89,7 @@ async function makeGameInfo(game_id: number): Promise<GameInfo> {
     }
   }
   throw new Error(`game_info not found for ${game_id}`)
-}
+}  
 
 const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([])
@@ -79,7 +100,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
 
   // Find which games we can work on
   async function getSupported() {
-    const folders = await SteamClient.InstallFolder.GetInstallFolders()
+    const folders = await getMounted()
     let gameInfos: GameInfo[] = []
     for (let f of folders) {
       for (let a of f.vecApps) {
@@ -88,6 +109,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           game_name: appStore.GetAppOverviewByGameID(a.nAppID).display_name,
           install_root: f.strFolderPath
         }
+        //console.log("steamback considering", f)
         gameInfos = gameInfos.concat(info)
       }
     }
@@ -217,6 +239,7 @@ export default definePlugin((serverApi: ServerAPI) => {
   //console.info('IN STEAMBACK!')
 
   TimeAgo.addDefaultLocale(en)
+  gServerAPI = serverApi
 
   const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications(async (n: LifetimeNotification) => {
     // console.log("Steamback AppLifetimeNotification", n);
