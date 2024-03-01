@@ -6,13 +6,15 @@ react-devtools --no-sandbox
 
 ## Urgent todo
 
-* look for steamback considering log messages
-* fix message for unscanned files to say "scanning, please wait..."
+* DONE update DFL lib
+* check reported bugs
+* DONE look for steamback considering log messages
+* DONE fix message for unscanned files to say "scanning, please wait..."
 * add a "backup gameX now" button which is enabled only while the game is running.
-* check python and JS log messages for errors
+* DONE check python and JS log messages for errors
 * check desktop build (and change to poetry)
-* figure out why supported games list is sometimes totally busted
-* firgure out why subnautica backup didn't happen
+* DONE figure out why supported games list is sometimes totally busted
+* DONE firgure out why subnautica backup didn't happen
 
 
 [2024-03-01 10:42:59,787][DEBUG]: Read rcf with 2 entries

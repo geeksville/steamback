@@ -50,3 +50,7 @@ cli/decky plugin build
 
 cd /home/deck/homebrew/services
 sudo /home/deck/homebrew/services/PluginLoader
+
+### How to debug JS on steamdeck
+
+Point chrome at chrome://inspect/#devices

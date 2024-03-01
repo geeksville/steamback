@@ -93,7 +93,7 @@ async function makeGameInfo(game_id: number): Promise<GameInfo> {
 
 const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([])
-  const [supportedGameInfos, setSupportedGameInfos] = useState<GameInfo[]>([])
+  const [supportedGameInfos, setSupportedGameInfos] = useState<GameInfo[] | undefined>(undefined)
 
   // Create formatter (English).
   const timeAgo = new TimeAgo('en-US')
@@ -199,8 +199,8 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
       }
     </PanelSection>
 
-  const supportedHtml = supportedGameInfos.length < 1 ?
-    <span style={{ padding: '1rem', display: 'block' }}>Unfortunately, none of the currently installed games are supported.  Please check for new steamback versions occasionally...</span> :
+  const supportedHtml = supportedGameInfos === undefined ?
+    <span style={{ padding: '1rem', display: 'block' }}>Finding supported games...</span> :
     <ul style={{ listStyleType: 'none', padding: '1rem' }}>
       {
         supportedGameInfos.map(info => {
