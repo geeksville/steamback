@@ -30,6 +30,8 @@ def _parse_vcf(path: str) -> dict:
                 m = kvMatch.fullmatch(line)
                 if m:
                     d[m.group(1)] = m.group(2)
+    except FileNotFoundError:
+        logger.warning(f'App for { path } is not currently mounted, skipping')
     except Exception:
         logger.error(
             f'Failed parsing vcf { path } due to exception { traceback.format_exc() }')
