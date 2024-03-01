@@ -4,6 +4,41 @@ THIS IS (currently) a mostly unformatted set of notes.  If you aren't the dev fo
 
 react-devtools --no-sandbox
 
+## Urgent todo
+
+* look for steamback considering log messages
+* fix message for unscanned files to say "scanning, please wait..."
+* add a "backup gameX now" button which is enabled only while the game is running.
+* check python and JS log messages for errors
+* check desktop build (and change to poetry)
+* figure out why supported games list is sometimes totally busted
+* firgure out why subnautica backup didn't happen
+
+
+[2024-03-01 10:42:59,787][DEBUG]: Read rcf with 2 entries
+[2024-03-01 10:42:59,787][DEBUG]: Searching roots ['/home/deck/.local/share/Steam/steamapps/common/Batman Arkham Asylum GOTY', '/home/deck/.local/share/Steam/steamapps/compatdata/35140/pfx/drive_c/users/steamuser/Documents', '/home/deck/.local/share/Steam/steamapps/compatdata/35140/pfx/drive_c/users/steamuser/Application Data', '/home/deck/.local/share/Steam/steamapps/compatdata/35140/pfx/drive_c/users/steamuser/AppData/LocalLow', '/home/deck/.local/share/Steam/steamapps/compatdata/35140/pfx/drive_c/users/steamuser/Local Settings/Application Data']
+[2024-03-01 10:42:59,822][DEBUG]: Autoclouds in /home/deck/.local/share/Steam/steamapps/common/Batman Arkham Asylum GOTY are []
+[2024-03-01 10:42:59,837][DEBUG]: Autoclouds in /home/deck/.local/share/Steam/steamapps/compatdata/35140/pfx/drive_c/users/steamuser are []
+[2024-03-01 10:42:59,838][DEBUG]: RCF is valid /home/deck/.local/share/Steam/userdata/49847735/35140/remote
+[2024-03-01 10:42:59,838][DEBUG]: No rcf /home/deck/.local/share/Steam/userdata/49847735/228980/remotecache.vdf
+...
+[2024-03-01 10:43:02,393][ERROR]: Invalid game_info, not installdir {'game_id': 1794680, 'game_name': 'Vampire Survivors', 'install_root': '/run/media/mmcblk0p1'}
+[2024-03-01 10:43:02,393][DEBUG]: RCF is valid /home/deck/.local/share/Steam/userdata/49847735/1794680/remote
+[2024-03-01 10:43:02,393][DEBUG]: No rcf /home/deck/.local/share/Steam/userdata/49847735/2080690/remotecache.vdf
+[2024-03-01 10:43:02,393][DEBUG]: Read rcf with 0 entries
+[2024-03-01 10:43:02,394][ERROR]: Failed parsing vcf /run/media/mmcblk0p1/steamapps/appmanifest_2080690.acf due to exception Traceback (most recent call last):
+  File "/home/deck/homebrew/plugins/steamback/py_modules/steamback/__init__.py", line 27, in _parse_vcf
+    with open(path) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/run/media/mmcblk0p1/steamapps/appmanifest_2080690.acf'
+...
+[2024-03-01 10:43:05,195][DEBUG]: Searching roots ['/home/deck/.local/share/Steam/steamapps/common/shapez 2 Demo', '/home/deck/.local/share/Steam/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/Documents', '/home/deck/.local/share/Steam/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/Application Data', '/home/deck/.local/share/Steam/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/AppData/LocalLow', '/home/deck/.local/share/Steam/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/Local Settings/Application Data', '/run/media/deck/KevSD512/steamapps/common/shapez 2 Demo', '/run/media/deck/KevSD512/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/Documents', '/run/media/deck/KevSD512/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/Application Data', '/run/media/deck/KevSD512/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/AppData/LocalLow', '/run/media/deck/KevSD512/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/Local Settings/Application Data']
+[2024-03-01 10:43:05,197][DEBUG]: RCF is valid /home/deck/.local/share/Steam/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/AppData/LocalLow
+[2024-03-01 10:43:05,205][DEBUG]: Autoclouds in /run/media/deck/KevSD512/steamapps/common/shapez 2 Demo are []
+[2024-03-01 10:43:05,205][DEBUG]: Autoclouds in /run/media/deck/KevSD512/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser are []
+[2024-03-01 10:43:05,205][DEBUG]: RCF is valid /home/deck/.local/share/Steam/steamapps/compatdata/2642190/pfx/drive_c/users/steamuser/AppData/LocalLow
+
+
+
 ## desktop todo
 
 option to scan and list supported games

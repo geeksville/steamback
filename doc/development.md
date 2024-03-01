@@ -45,3 +45,8 @@ First make sure you are using the correct version of node:
 nvm use --lts
 
 cli/decky plugin build
+
+### How to debug python on steamdeck
+
+cd /home/deck/homebrew/services
+sudo /home/deck/homebrew/services/PluginLoader
