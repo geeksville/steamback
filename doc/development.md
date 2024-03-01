@@ -41,4 +41,7 @@ python3 -m build
 
 Good tips [here](https://wiki.deckbrew.xyz/en/plugin-dev/cef-debugging).
 
+First make sure you are using the correct version of node:
+nvm use --lts
+
 cli/decky plugin build
