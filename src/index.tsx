@@ -50,6 +50,7 @@ interface SaveInfo {
 
 
 let gServerAPI: ServerAPI | undefined = undefined
+let gRunningGameInfo = undefined as GameInfo | undefined
 
 // Find the currently mounted game filesystems
 async function getMounted() {
@@ -91,9 +92,36 @@ async function makeGameInfo(game_id: number): Promise<GameInfo> {
   throw new Error(`game_info not found for ${game_id}`)
 }  
 
+async function doBackup(gameInfo: GameInfo) {
+  // we check when the game is launched _or_ landed because steam cloud might have updated it from some other PC      
+  try {
+    console.log("Steamback backup game: ", gameInfo)
+    const r = await gServerAPI!.callPluginMethod("do_backup", {
+      game_info: gameInfo,
+      dry_run: false
+    })
+
+    if(!r.success)
+      throw new Error('do_backup failed')
+
+    const saveinfo = r.result as SaveInfo
+    console.log("steamback backup results", saveinfo)
+    if (saveinfo)
+      gServerAPI!.toaster.toast({
+        title: 'Steamback',
+        body: `${gameInfo.game_name} snapshot taken`,
+        icon: <FiDownload />,
+      });
+  }
+  catch (error: any) {
+    console.error('Steamback backup', error)
+  }
+}
+
 const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
   const [saveInfos, setSaveInfos] = useState<SaveInfo[]>([])
   const [supportedGameInfos, setSupportedGameInfos] = useState<GameInfo[] | undefined>(undefined)
+  const [dryRunGameInfo, setDryRunGameInfo] = useState<GameInfo | undefined>(undefined)
 
   // Create formatter (English).
   const timeAgo = new TimeAgo('en-US')
@@ -125,16 +153,65 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
     setSupportedGameInfos(supported)
   }
 
-  useEffect(() => {
-    getSupported()
-
+  // Get the list of save games
+  async function getSaveInfos() {
     serverAPI.callPluginMethod("get_saveinfos", {}).then(saveinfo => {
       // console.log("steamback saveinfos", saveinfo.result)
       setSaveInfos(saveinfo.result as SaveInfo[])
     }).catch(e => {
       console.error("steamback saveinfos failed", e)
     })
+  }
+
+  // Get the info for the currently running game (if it could be saved now)
+  async function getSaveNow() {
+    if(gRunningGameInfo !== undefined) {
+      const gameInfo = gRunningGameInfo
+      console.log("Checking running save info: ", gameInfo)
+      serverAPI.callPluginMethod("do_backup", {
+        game_info: gameInfo,
+        dry_run: true
+      }).then(saveinfo => {
+        console.log("steamback dry run result", saveinfo.result)
+        setDryRunGameInfo(saveinfo.result ? gameInfo : undefined)
+      }).catch(e => {
+        console.error("steamback dryrun failed", e)
+      })
+    }
+  }
+
+  useEffect(() => {
+    getSupported()
+    getSaveInfos()
+    getSaveNow()
   }, []) // extra [] at end means only run for first render
+
+  // Show a button to backup the currently running game
+  function getRunningBackupHtml(): JSX.Element {
+    if(dryRunGameInfo === undefined)
+      return <div></div>
+
+    const gameInfo = dryRunGameInfo!
+
+    async function doBackupNow() {
+      await doBackup(gameInfo)
+      setSaveInfos(saveInfos) // force a redraw of the saveinfo GUI list
+      setDryRunGameInfo(undefined) // we just did a save so until things change we can't do another
+    }
+
+    const buttonText = "Backup now"
+    const labelText = gameInfo.game_name
+    const descText = "Attempts to backup the currently running game"
+    return <PanelSectionRow>
+        <ButtonItem onClick={doBackupNow}
+          icon={<FiDownload />}
+          description={descText}
+          label={labelText}>
+          {buttonText}
+        </ButtonItem>
+      </PanelSectionRow>  
+  }
+
 
   /// Only show snapshot section if we have some saveinfos
   // removed alpha disclaimer: <span style={{ padding: '1rem', display: 'block' }}>This plugin is currently in <b>alpha</b> testing, if you see problems use the 'Undo' button and let us know.  </span>
@@ -164,7 +241,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
           }
 
           // raise a modal dialog to confirm the user wants to restore
-          const askRestore = () => {
+          function askRestore() {
             const title = si.is_undo ? "Revert recent snapshot" : "Revert to snapshot"
             const message = si.is_undo ?
               `Are you sure you want to undo your changes to ${si.game_info.game_name}?` :
@@ -223,6 +300,7 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
         )
       }}>Steamback</a> automatically makes save-game snapshots for many Steam games. See our github page for more information.</span>
 
+      {getRunningBackupHtml()}
       {snapshotHtml}
 
       <PanelSection title="Supported games">
@@ -233,7 +311,6 @@ const SteambackContent: VFC<{ serverAPI: ServerAPI }> = ({ serverAPI }) => {
 }
 
 
-
 export default definePlugin((serverApi: ServerAPI) => {
 
   //console.info('IN STEAMBACK!')
@@ -242,29 +319,13 @@ export default definePlugin((serverApi: ServerAPI) => {
   gServerAPI = serverApi
 
   const taskHook = SteamClient.GameSessions.RegisterForAppLifetimeNotifications(async (n: LifetimeNotification) => {
-    // console.log("Steamback AppLifetimeNotification", n);
+    console.log("Steamback AppLifetimeNotification", n);
 
-    // actually - we also want to check when the game is launched _also_ because steam cloud might have updated it from some other PC
-    // if (!n.bRunning) {
-    try {
-      const gameInfo: GameInfo = await makeGameInfo(n.unAppID)
-      console.log("Steamback backup game: ", gameInfo)
-      const r = await serverApi.callPluginMethod("do_backup", {
-        game_info: gameInfo
-      })
+    const gameInfo: GameInfo = await makeGameInfo(n.unAppID)
 
-      const saveinfo = r.result as SaveInfo
-      console.log("steamback backup results", saveinfo)
-      if (saveinfo)
-        serverApi.toaster.toast({
-          title: 'Steamback',
-          body: `${gameInfo.game_name} snapshot taken`,
-          icon: <FiDownload />,
-        });
-    }
-    catch (error: any) {
-      console.error('Steamback backup', error)
-    }
+    // Update the global that the GUI uses for 'backup now' button
+    gRunningGameInfo = n.bRunning ? gameInfo : undefined 
+    return doBackup(gameInfo)
   })
 
   let sid = new SteamID(App.m_CurrentUser.strSteamID)

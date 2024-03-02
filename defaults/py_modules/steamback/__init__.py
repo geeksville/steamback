@@ -682,7 +682,7 @@ class Engine:
     SaveInfo is a dict with filename, game_id, timestamp, is_undo
     game_info is a dict of game_id and install_root
     """
-    async def do_backup(self, game_info: dict) -> dict:
+    async def do_backup(self, game_info: dict, dry_run: bool = False) -> dict:
         logger.info(f'Attempting backup of { game_info }')
         rcf = self._read_rcf(game_info)
 
@@ -698,11 +698,14 @@ class Engine:
                     f'Skipping backup for { game_id } - no changed files')
                 return None
 
-        saveInfo = self._create_savedir(game_info)
-        self._copy_all_to_saveinfo(saveInfo, rcf)
+        if not dry_run:
+            saveInfo = self._create_savedir(game_info)
+            self._copy_all_to_saveinfo(saveInfo, rcf)
 
-        await self._cull_old_saves()
-        return saveInfo
+            await self._cull_old_saves()
+            return saveInfo
+        else:
+            return {}  # For dryruns return a placeholder empty dict to indicate 'would have backed up'
 
     """
     Restore a particular savegame using the saveinfo object
