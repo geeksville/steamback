@@ -1,43 +1,39 @@
-[project]
+
+[tool.poetry]
 name = "steamback"
-version = "1.0.1"
-authors = [
-  { name="Kevin Hester", email="kevinh@geeksville.com" },
-]
+version = "1.1.0"
 description = "A python library and tool for backing up Steam save games"
+authors = [
+  "Kevin Hester <kevinh@geeksville.com>"
+  ]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/geeksville/steamback"
 readme = "README.md"
-requires-python = ">=3.7"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-    "Operating System :: OS Independent",
-]
-dependencies = [
-    "platformdirs >= 3.1,< 4.3",
-    "psutil ~= 5.9.1",
-    "async-tkinter-loop ~= 0.7.0",
-    "sv-ttk ~= 2.4",
-    "timeago ~= 1.0.16",
-    "Pillow >= 9.2,< 10.3"
+packages = [
+    { include = "steamback", from = "py_modules" },
 ]
 
-[tool.setuptools]
-include-package-data = true
+[tool.poetry.scripts]
+steamback = "steamback.__main__:main"
 
-[tool.setuptools.packages.find]
-where = ["py_modules"]  # list of folders that contain the packages (["."] by default)
-include = ["steamback*"]  # package names should match these glob patterns (["*"] by default)
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/geeksville/steamback/issues"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+platformdirs = "^4.0.0"
+pillow = "^10.1.0"
+psutil = "^5.9.1"
+async-tkinter-loop = "^0.7.0"
+sv-ttk = "^2.4"
+timeago = "^1.0.16"
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^6.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.setuptools.package-data]
 "*" = ["*.png"]
-
-[project.scripts]
-steamback = "steamback.__main__:main"
-
-[project.urls]
-"Homepage" = "https://github.com/geeksville/steamback"
-"Bug Tracker" = "https://github.com/geeksville/steamback/issues"
-
-[build-system]
-requires = ["setuptools>=61.0", "setuptools-scm"]
-build-backend = "setuptools.build_meta"
