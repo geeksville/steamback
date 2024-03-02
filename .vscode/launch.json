@@ -16,9 +16,10 @@
         }, */
         {
             "name": "Run test harness",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "module": "py_modules.steamback",
+            "python": "/home/kevinh/.cache/pypoetry/virtualenvs/steamback-FZZluSq2-py3.11/bin/python", // from poetry debug info
+            "module": "steamback",
             "justMyCode": true,
             "args": [
                 "--debug",
@@ -27,9 +28,10 @@
         },
         {
             "name": "Run backup daemon",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "module": "py_modules.steamback",
+            "python": "/home/kevinh/.cache/pypoetry/virtualenvs/steamback-FZZluSq2-py3.11/bin/python", // from poetry debug info
+            "module": "steamback",
             "justMyCode": true,
             "args": [
                 "--debug",
@@ -38,9 +40,10 @@
         },
         {
             "name": "Run desktop gui",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "module": "py_modules.steamback",
+            "python": "/home/kevinh/.cache/pypoetry/virtualenvs/steamback-FZZluSq2-py3.11/bin/python", // from poetry debug info
+            "module": "steamback",
             "justMyCode": true,
             "args": [
                 "--debug"
@@ -48,9 +51,10 @@
         },
         {
             "name": "Debug desktop gui",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "module": "py_modules.steamback",
+            "python": "/home/kevinh/.cache/pypoetry/virtualenvs/steamback-FZZluSq2-py3.11/bin/python", // from poetry debug info
+            "module": "steamback",      
             "justMyCode": true,
             "args": [
                 "--debug"

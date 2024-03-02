@@ -7,12 +7,14 @@ react-devtools --no-sandbox
 ## Urgent todo
 
 * DONE update DFL lib
-* check reported bugs
+* DONE check reported bugs
 * DONE look for steamback considering log messages
 * DONE fix message for unscanned files to say "scanning, please wait..."
-* add a "backup gameX now" button which is enabled only while the game is running.
+* DONE add a "backup gameX now" button which is enabled only while the game is running.
 * DONE check python and JS log messages for errors
-* check desktop build (and change to poetry)
+* check desktop build (and change to poetry) - including embedded pngs
+* fix shapez: need to append installdir to /home/kevinh/.local/share/
+* fix baba is you:
 * DONE figure out why supported games list is sometimes totally busted
 * DONE firgure out why subnautica backup didn't happen
 
