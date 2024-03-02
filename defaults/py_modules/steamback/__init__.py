@@ -206,11 +206,13 @@ class Engine:
     is_system_dir is True if instead of the game install loc you'd like us to search the system steam data
     """
 
-    def _get_game_saves_root(self, game_info: dict, is_linux_game: bool, is_system_dir: bool = False) -> list[str]:
+    def _get_game_saves_root(self, game_info: dict, is_linux_game: bool, is_system_dir: bool = False) -> str:
         steamApps = self._get_steamapps_dir(game_info, is_system_dir)
 
         if is_linux_game:
             installdir = self._parse_installdir(game_info)
+            # FIXME 2/2024 valve seems to have moved the saves on desktop linux to $HOME/.local/share.  Also they are now
+            # munging the name of that directory to change spaces to underscore.  NOTE: This change is not used on steamdeck.
             rootdir = os.path.join(steamApps, "common", installdir)
         else:
             rootdir = os.path.join(
