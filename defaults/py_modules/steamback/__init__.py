@@ -213,6 +213,7 @@ class Engine:
             installdir = self._parse_installdir(game_info)
             # FIXME 2/2024 valve seems to have moved the saves on desktop linux to $HOME/.local/share.  Also they are now
             # munging the name of that directory to change spaces to underscore.  NOTE: This change is not used on steamdeck.
+            # See Baba Is You for an example of this bug.
             rootdir = os.path.join(steamApps, "common", installdir)
         else:
             rootdir = os.path.join(

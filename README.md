@@ -1,5 +1,7 @@
 # Steamback
 
+![Steamback badge](https://img.shields.io/badge/dynamic/json?url=https://plugins.deckbrew.xyz/plugins&query=$[?(@.name%20==%20%27Steamback%27)].downloads&suffix=%20installs&label=Steamback&color=3ea6a3)
+
 (This page is mostly about our Steam Deck plugin - if you are looking for the desktop version of Steamback see [here](doc/desktop.md))
 
 Steamback is a plugin for [decky-loader](https://deckbrew.xyz/).  It adds automatic 'snapshots' of changed savegames for many (but not all - see below) 'steam cloud' enabled games.  
