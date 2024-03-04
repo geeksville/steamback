@@ -29,7 +29,7 @@ sv-ttk = "^2.4"
 timeago = "^1.0.16"
 
 [tool.poetry.group.dev.dependencies]
-flake8 = "^6.1.0"
+flake8 = ">=6.1,<8.0"
 
 [build-system]
 requires = ["poetry-core"]
