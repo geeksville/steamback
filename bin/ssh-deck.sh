@@ -1,1 +1,0 @@
-ssh -i /home/kevinh/.ssh/deck_from_thinkpad deck@192.168.10.103
