@@ -54,3 +54,6 @@ sudo /home/deck/homebrew/services/PluginLoader
 ### How to debug JS on steamdeck
 
 Point chrome at chrome://inspect/#devices
+Point chrome at http://192.168.86.234:8081/ (first enable cef debug in decky - see above)
+
+Click to view "Shared JS Context" (this is where you'll see the debug console output for decky)
