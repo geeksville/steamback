@@ -1,7 +1,7 @@
 
 [tool.poetry]
 name = "steamback"
-version = "1.1.1"
+version = "1.1.2"
 description = "A python library and tool for backing up Steam save games"
 authors = [
   "Kevin Hester <kevinh@geeksville.com>"
