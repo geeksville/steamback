@@ -21,7 +21,7 @@ Note: this doesn't preserve hierarchy - only keys are checked
 
 
 def _parse_vcf(path: str) -> dict:
-    kvMatch = re.compile('\s*"(.+)"\s+"(.+)"\s*')
+    kvMatch = re.compile(r'\s*"(.+)"\s+"(.+)"\s*')
     d = {}
     try:
         with open(path) as f:
@@ -39,7 +39,7 @@ def _parse_vcf(path: str) -> dict:
 
 
 def _parse_libs(path: str) -> list[str]:
-    kvMatch = re.compile('\s*"path"\s+"(.+)"\s*')
+    kvMatch = re.compile(r'\s*"path"\s+"(.+)"\s*')
     d = []
     with open(path) as f:
         for line in f:
