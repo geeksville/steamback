@@ -14,12 +14,12 @@ def make_game_info(p: Engine, game_id: int) -> dict:
     info = p.all_games.get(game_id, None)
 
     if not info:
-        print(f'Warning: no info found for { game_id } - simulating...')
+        print(f"Warning: no info found for { game_id } - simulating...")
         info = {
             # On a real steamdeck there may be multiple install_roots (main vs sdcard etc) (but only one per game)
             "install_root": p.get_steam_root(),
             "game_id": game_id,
-            "game_name": None
+            "game_name": None,
         }
 
     return info
@@ -34,10 +34,11 @@ home.../.steam/debian-installation/ubuntu12_32/reaper SteamLaunch AppId=1318690 
 
 def find_running_games() -> list[int]:
     # also available in environ['SteamGameId']
-    appMatch = re.compile('AppId=(.+)')
+    appMatch = re.compile("AppId=(.+)")
     # steam username is in environ['SteamAppUser']
 
     """Get the game id from a process, or None if process is not a game"""
+
     def get_game_id(p: psutil.Process) -> int:
         line = p.cmdline()
         if len(line) >= 3 and line[1] == "SteamLaunch":
@@ -74,6 +75,7 @@ class SteamWatcher:
 
     """Look for any game exits and return the saveinfo for any backups performed
     """
+
     async def check_once(self) -> CheckResult:
         running = set(find_running_games())
 
@@ -95,8 +97,7 @@ class SteamWatcher:
         return CheckResult(game_started=len(started) > 0, backed_up=backups)
 
     async def run_forever(self):
-        self.engine.logger.info(
-            "Watching Steam for game exit, press Ctrl-C to quit...")
+        self.engine.logger.info("Watching Steam for game exit, press Ctrl-C to quit...")
         while True:
             await asyncio.sleep(5)
             await self.check_once()

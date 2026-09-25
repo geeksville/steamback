@@ -11,7 +11,6 @@ import traceback
 import glob
 from pathlib import Path
 
-
 logger = None
 
 """Try to parse a valve vdf file.  Returning all key/value pairs it finds as string pairs.
@@ -31,10 +30,11 @@ def _parse_vcf(path: str) -> dict:
                 if m:
                     d[m.group(1)] = m.group(2)
     except FileNotFoundError:
-        logger.warning(f'App for { path } is not currently mounted, skipping')
+        logger.warning(f"App for { path } is not currently mounted, skipping")
     except Exception:
         logger.error(
-            f'Failed parsing vcf { path } due to exception { traceback.format_exc() }')
+            f"Failed parsing vcf { path } due to exception { traceback.format_exc() }"
+        )
     return d
 
 
@@ -69,7 +69,7 @@ class Engine:
         #    logger.info('Running under decky')
         # except:
 
-        logger.info(f'Steamback engine created: { config }')
+        logger.info(f"Steamback engine created: { config }")
 
         # a dict from gameid -> gameinfo for all installed games.  ONLY USED ON DESKTOP not DECKY
         self.all_games = None
@@ -81,7 +81,7 @@ class Engine:
         self.ignore_unchanged = True
 
     def add_account_id(self, id_num: int):
-        logger.debug(f'Setting account id { id_num } on { self }')
+        logger.debug(f"Setting account id { id_num } on { self }")
         self.account_ids.add(id_num)
 
     """Find the steam account ID for the current user (and)
@@ -92,8 +92,12 @@ class Engine:
 
     def auto_set_account_id(self) -> list[int]:
         files = os.listdir(os.path.join(self.get_steam_root(), "userdata"))
-        ids = list(filter(lambda i: i is not None, map(
-            lambda f: int(f) if f.isnumeric() and f != "0" else None, files)))
+        ids = list(
+            filter(
+                lambda i: i is not None,
+                map(lambda f: int(f) if f.isnumeric() and f != "0" else None, files),
+            )
+        )
         for id in ids:
             self.add_account_id(id)
         return ids
@@ -153,8 +157,9 @@ class Engine:
 
     def _parse_installdir(self, game_info: dict) -> str:
         app_dir = self._get_steamapps_dir(game_info)
-        vcf = _parse_vcf(os.path.join(
-            app_dir, f'appmanifest_{ game_info["game_id"] }.acf'))
+        vcf = _parse_vcf(
+            os.path.join(app_dir, f'appmanifest_{ game_info["game_id"] }.acf')
+        )
         install_dir = vcf.get("installdir", None)
         return install_dir
 
@@ -176,11 +181,14 @@ class Engine:
             app_dir = os.path.join(steam_dir, "steamapps")
             files = []  # default to assume no files
             try:
-                files = filter(lambda f: f.startswith("appmanifest_")
-                               and f.endswith(".acf"), os.listdir(app_dir))
+                files = filter(
+                    lambda f: f.startswith("appmanifest_") and f.endswith(".acf"),
+                    os.listdir(app_dir),
+                )
             except Exception as e:
                 logger.warning(
-                    f'Skipping invalid library directory { app_dir } due to { e }')
+                    f"Skipping invalid library directory { app_dir } due to { e }"
+                )
 
             for f in files:
                 vcf = _parse_vcf(os.path.join(app_dir, f))
@@ -206,7 +214,9 @@ class Engine:
     is_system_dir is True if instead of the game install loc you'd like us to search the system steam data
     """
 
-    def _get_game_saves_root(self, game_info: dict, is_linux_game: bool, is_system_dir: bool = False) -> str:
+    def _get_game_saves_root(
+        self, game_info: dict, is_linux_game: bool, is_system_dir: bool = False
+    ) -> str:
         steamApps = self._get_steamapps_dir(game_info, is_system_dir)
 
         if is_linux_game:
@@ -217,7 +227,14 @@ class Engine:
             rootdir = os.path.join(steamApps, "common", installdir)
         else:
             rootdir = os.path.join(
-                steamApps, 'compatdata', str(game_info["game_id"]), 'pfx', 'drive_c', 'users', 'steamuser')
+                steamApps,
+                "compatdata",
+                str(game_info["game_id"]),
+                "pfx",
+                "drive_c",
+                "users",
+                "steamuser",
+            )
 
         return rootdir
 
@@ -233,7 +250,7 @@ class Engine:
         # we want the directories that contained the autocloud
         dirs = list(map(lambda f: str(f.parent), files))
 
-        logger.debug(f'Autoclouds in { root_dir } are { dirs }')
+        logger.debug(f"Autoclouds in { root_dir } are { dirs }")
         return dirs
 
     """
@@ -243,7 +260,7 @@ class Engine:
     def _find_save_root_from_autoclouds(self, game_info, rcf, autocloud: str) -> str:
 
         if len(rcf) < 1:
-            return None     # No backup files in the rcf, we can't even do the scan
+            return None  # No backup files in the rcf, we can't even do the scan
 
         # Find any common prefix (which is a directory path) that is shared by all entries in the rcf filenames
         prevR = rcf[0]
@@ -251,7 +268,8 @@ class Engine:
         for r in rcf:
             # find index of first differing char (or None if no differences)
             index = next(
-                (i for i in range(min(len(prevR), len(r))) if prevR[i] != r[i]), None)
+                (i for i in range(min(len(prevR), len(r))) if prevR[i] != r[i]), None
+            )
 
             if index is not None and firstDifference > index:
                 firstDifference = index
@@ -269,15 +287,15 @@ class Engine:
         # FIXME what about paths where someone used / in the filename!
         # NOTE: This has been confirmed to also work on Windows - on that platform also Valve uses / as the path
         # separator.
-        dirSplit = rPrefix.rfind('/')
+        dirSplit = rPrefix.rfind("/")
         if dirSplit != -1:
             # throw away everything after the last slash (and the slash itself)
             rPrefix = rPrefix[:dirSplit]
 
             # check the last n characters of autocloud and if they match our prefix, strip them to find the new root
-            autoTail = autocloud[-len(rPrefix):]
+            autoTail = autocloud[-len(rPrefix) :]
             if autoTail == rPrefix:
-                autocloud = autocloud[:-len(rPrefix)]
+                autocloud = autocloud[: -len(rPrefix)]
 
         # possibly convert / to \ if necessary for windows
         return os.path.normpath(autocloud)
@@ -291,25 +309,33 @@ class Engine:
 
         def addRoots(is_system_dir: bool):
             # try relative to the linux root
-            roots.append(self._get_game_saves_root(
-                game_info, is_linux_game=True, is_system_dir=is_system_dir))
+            roots.append(
+                self._get_game_saves_root(
+                    game_info, is_linux_game=True, is_system_dir=is_system_dir
+                )
+            )
 
             # try relative to Documents or application data on windows
             r = self._get_game_saves_root(
-                game_info, is_linux_game=False, is_system_dir=is_system_dir)
-            windowsRoots = ['Documents',
-                            'Application Data', os.path.join('AppData', 'LocalLow'), os.path.join('Local Settings', 'Application Data')]
+                game_info, is_linux_game=False, is_system_dir=is_system_dir
+            )
+            windowsRoots = [
+                "Documents",
+                "Application Data",
+                os.path.join("AppData", "LocalLow"),
+                os.path.join("Local Settings", "Application Data"),
+            ]
             for subdir in windowsRoots:
                 d = os.path.join(r, subdir)
                 roots.append(d)
 
         # look in the system directory first (if we might also have savegames on the mmc)
-        if (self._is_on_mmc(game_info)):
+        if self._is_on_mmc(game_info):
             addRoots(True)
 
         addRoots(False)
 
-        logger.debug(f'Searching roots { roots }')
+        logger.debug(f"Searching roots { roots }")
         foundDirs = []
         for r in roots:
             if self._rcf_is_valid(r, rcf):
@@ -361,8 +387,7 @@ class Engine:
         for f in autoclouds:
             r = self._find_save_root_from_autoclouds(game_info, rcf, f)
             if r:
-                logger.debug(
-                    f"Mapping autocloud { f } to { r } root directory")
+                logger.debug(f"Mapping autocloud { f } to { r } root directory")
                 autoRoots.append(r)
 
         # Add the autocloud dirs to the simple directories we found
@@ -372,7 +397,7 @@ class Engine:
         foundDirs = list(dict.fromkeys(foundDirs))
         return foundDirs
 
-    """ 
+    """
     confirm that at least one savegame exists, to validate our assumptions about where they are being stored
     if no savegame found claim we can't back this app up.
     """
@@ -381,7 +406,7 @@ class Engine:
         for f in rcf:
             full = os.path.join(root_dir, f)
             if os.path.isfile(full):
-                logger.debug(f'RCF is valid { root_dir }')
+                logger.debug(f"RCF is valid { root_dir }")
                 return True
             else:
                 # logger.debug(f'RCF file not found { full }')
@@ -431,24 +456,23 @@ class Engine:
             else:
                 logger.debug(f"No rcf {path}")
 
-        logger.debug(f'Read rcf with { len(rcf) } entries')
+        logger.debug(f"Read rcf with { len(rcf) } entries")
 
         # If we haven't already found where the savegames for this app live, do so now (or fail if not findable)
         if "save_games_roots" not in game_info:
             saveRoots = self._find_save_games(game_info, rcf)
             if len(saveRoots) < 1:
-                logger.warning(
-                    f'Unable to backup { game_info }: not yet supported')
+                logger.warning(f"Unable to backup { game_info }: not yet supported")
                 return None
 
             # remove save_game roots which don't seem to match any filenames in the existing rcf data from valve
             # confirm that at least one savegame exists, to validate our assumptions about where they are being stored
             # if no savegame found claim we can't back this app up.
             saveRoots = list(
-                filter(lambda root: self._rcf_is_valid(root, rcf), saveRoots))
+                filter(lambda root: self._rcf_is_valid(root, rcf), saveRoots)
+            )
             if len(saveRoots) < 1:
-                logger.warning(
-                    f'RCF seems invalid, not backing up { game_info }')
+                logger.warning(f"RCF seems invalid, not backing up { game_info }")
                 return None
 
             # For legacy purposes, use the first found entry as save_games_root, we store this as a dict mapping
@@ -505,8 +529,7 @@ class Engine:
             else:
                 # logger.warning(f'Not copying missing file { k }')
                 pass
-        logger.info(
-            f'Copied { numCopied } files from { src_dir } to { dest_dir }')
+        logger.info(f"Copied { numCopied } files from { src_dir } to { dest_dir }")
 
     """
     Find the timestamp of the most recently updated file in a directory
@@ -529,8 +552,7 @@ class Engine:
         src_dirs = self._get_game_roots(game_info).keys()
 
         # for each directory, get the max time, then find the max of those times
-        dir_times = map(
-            lambda dir: self._get_directory_timestamp(rcf, dir), src_dirs)
+        dir_times = map(lambda dir: self._get_directory_timestamp(rcf, dir), src_dirs)
         max_time = max(dir_times)
 
         return max_time
@@ -550,13 +572,13 @@ class Engine:
             "game_info": game_info,
             "timestamp": ts,
             "filename": f'{ "undo" if is_undo else "save" }_{ game_id }_{ ts }',
-            "is_undo": is_undo
+            "is_undo": is_undo,
         }
 
         path = self._saveinfo_to_dir(si)
-        logger.debug(f'Creating savedir JSON {path}, {si}')
+        logger.debug(f"Creating savedir JSON {path}, {si}")
         if not self.dry_run:
-            with open(path + ".json", 'w') as fp:
+            with open(path + ".json", "w") as fp:
                 json.dump(si, fp, indent=1)
 
         return si
@@ -580,7 +602,8 @@ class Engine:
                     del gi["save_games_root"]
             except json.JSONDecodeError as e:
                 logger.error(
-                    f'Corrupted JSON for {filename}, attempting delete of bad json file, {e}')
+                    f"Corrupted JSON for {filename}, attempting delete of bad json file, {e}"
+                )
                 try:
                     os.remove(j)
                 except OSError:
@@ -595,12 +618,12 @@ class Engine:
         root = self._get_savesdir()
 
         # Make sure saves dir is a valid absolute path before we start doing dangerous things
-        assert root[0] == '/'
+        assert root[0] == "/"
 
         filepath = os.path.join(root, filename) + "*"
         files = glob.glob(filepath)
         for f in files:
-            logger.debug(f'Deleting {f}')
+            logger.debug(f"Deleting {f}")
             try:
                 if os.path.isfile(f):
                     os.remove(f)
@@ -612,6 +635,7 @@ class Engine:
     """
     we keep only the most recent undo and the most recent 10 saves
     """
+
     async def _cull_old_saves(self):
         infos = await self.get_saveinfos()
 
@@ -621,7 +645,7 @@ class Engine:
         def delete_oldest(files, to_keep):
             while len(files) > to_keep:
                 todel = files.pop()
-                logger.info(f'Culling { todel }')
+                logger.info(f"Culling { todel }")
                 # if not self.dry_run: we ignore dryrun for culling otherwise our test system dir fills up
                 self._delete_savedir(todel["filename"])
 
@@ -639,12 +663,19 @@ class Engine:
     """
     Get the newest saveinfo for a specified game (or None if not found)
     """
+
     async def _get_newest_save(self, game_id):
         infos = await self.get_saveinfos()
 
         # Find first matching item or None
         newest = next(
-            (x for x in infos if x["game_info"]["game_id"] == game_id and not x["is_undo"]), None)
+            (
+                x
+                for x in infos
+                if x["game_info"]["game_id"] == game_id and not x["is_undo"]
+            ),
+            None,
+        )
         return newest
 
     """
@@ -685,8 +716,9 @@ class Engine:
     SaveInfo is a dict with filename, game_id, timestamp, is_undo
     game_info is a dict of game_id and install_root
     """
+
     async def do_backup(self, game_info: dict, dry_run: bool = False) -> dict:
-        logger.info(f'Attempting backup of { game_info }')
+        logger.info(f"Attempting backup of { game_info }")
         rcf = self._read_rcf(game_info)
 
         if not rcf:
@@ -697,8 +729,7 @@ class Engine:
         if newest_save and self.ignore_unchanged:
             game_timestamp = self._get_rcf_timestamp(rcf, game_info)
             if newest_save["timestamp"] > game_timestamp:
-                logger.warning(
-                    f'Skipping backup for { game_id } - no changed files')
+                logger.warning(f"Skipping backup for { game_id } - no changed files")
                 return None
 
         if not dry_run:
@@ -708,11 +739,14 @@ class Engine:
             await self._cull_old_saves()
             return saveInfo
         else:
-            return {}  # For dryruns return a placeholder empty dict to indicate 'would have backed up'
+            return (
+                {}
+            )  # For dryruns return a placeholder empty dict to indicate 'would have backed up'
 
     """
     Restore a particular savegame using the saveinfo object
     """
+
     async def do_restore(self, save_info: dict):
         # logger.debug(f'In do_restore for { save_info }')
         game_info = save_info["game_info"]
@@ -721,12 +755,12 @@ class Engine:
 
         # first make the backup (unless restoring from an undo already)
         if not save_info["is_undo"]:
-            logger.info('Generating undo files')
+            logger.info("Generating undo files")
             undoInfo = self._create_savedir(game_info, is_undo=True)
             self._copy_all_to_saveinfo(undoInfo, rcf)
 
         # then restore from our old snapshot
-        logger.info(f'Attempting restore of { save_info }')
+        logger.info(f"Attempting restore of { save_info }")
         self._copy_all_from_saveinfo(save_info, rcf)
 
         # we now might have too many undos, so possibly delete one
@@ -735,6 +769,7 @@ class Engine:
     """
     Given a list of game_infos, return a list of game_infos which are supported for backups
     """
+
     async def find_supported(self, game_infos: list) -> list[dict]:
         # if we get any sort of exception while scanning a particular game info, keep trying the others
         def try_rcf(info):
@@ -743,11 +778,13 @@ class Engine:
                 return self._read_rcf(info)
             except FileNotFoundError:
                 logger.warning(
-                    f'RCF file not found in scan of {info}, probably an unmounted SD card')
+                    f"RCF file not found in scan of {info}, probably an unmounted SD card"
+                )
                 return None
             except Exception:
                 logger.error(
-                    f'Error scanning rcf for {info}, exception { traceback.format_exc() }')
+                    f"Error scanning rcf for {info}, exception { traceback.format_exc() }"
+                )
                 return None
 
         # logger.debug(f'find supported { game_infos }')
@@ -757,6 +794,7 @@ class Engine:
     """
     Given a list of directory names, return a list of directories that are actually mounted
     """
+
     async def find_mounted(self, dirs: list) -> list[str]:
         # if we get any sort of exception while scanning a particular game info, keep trying the others
         def try_mount(f):
@@ -764,7 +802,8 @@ class Engine:
                 return os.path.exists(f)
             except Exception:
                 logger.error(
-                    f'Error finding mount for {f}, exception { traceback.format_exc() }')
+                    f"Error finding mount for {f}, exception { traceback.format_exc() }"
+                )
                 return None
 
         mounted = list(filter(try_mount, dirs))
@@ -776,6 +815,7 @@ class Engine:
 
     Returns an array of SaveInfo objects
     """
+
     async def get_saveinfos(self) -> list[dict]:
         dir = self._get_savesdir()
         files = filter(lambda f: f.endswith(".json"), os.listdir(dir))
@@ -785,11 +825,12 @@ class Engine:
                 si = self._file_to_saveinfo(f)
                 return si
             except Exception as e:
-                logger.error(f'Error reading JSON for {f}, {e}')
+                logger.error(f"Error reading JSON for {f}, {e}")
                 return None
 
-        infos = list(filter(lambda f: f is not None, map(
-            lambda f: attempt_saveinfo(f), files)))
+        infos = list(
+            filter(lambda f: f is not None, map(lambda f: attempt_saveinfo(f), files))
+        )
 
         # Sort by timestamp, newest first
         infos.sort(key=lambda i: i["timestamp"], reverse=True)

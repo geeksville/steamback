@@ -16,9 +16,7 @@ logger = None
 
 def add_scrollbar(view: ttk.Treeview) -> ttk.Scrollbar:
     root = view.master
-    b = ttk.Scrollbar(root,
-                      orient="vertical",
-                      command=view.yview)
+    b = ttk.Scrollbar(root, orient="vertical", command=view.yview)
 
     # Configuring treeview
     view.configure(yscrollcommand=b.set)
@@ -46,7 +44,7 @@ async def main_loop(root: Tk) -> None:
             await asyncio.sleep(interval)
     except TclError as e:
         if not "application has been destroyed" in str(e):
-            print(f'Exiting due to { e }')
+            print(f"Exiting due to { e }")
 
 
 def saveinfo_ago_str(si: dict) -> str:
@@ -81,7 +79,9 @@ class GUI:
 
         def on_close():
             # Here I write the X Y position of the window to a file "myapp.conf"
-            with open(os.path.join(self.engine.config.app_data_dir, "window.conf"), "w") as conf:
+            with open(
+                os.path.join(self.engine.config.app_data_dir, "window.conf"), "w"
+            ) as conf:
                 conf.write(root.geometry())
 
             root.destroy()
@@ -90,7 +90,9 @@ class GUI:
 
         # Here I read the X and Y positon of the window from when I last closed it.
         try:
-            with open(os.path.join(self.engine.config.app_data_dir, "window.conf"), "r") as conf:
+            with open(
+                os.path.join(self.engine.config.app_data_dir, "window.conf"), "r"
+            ) as conf:
                 root.geometry(conf.read())
         except Exception:
             pass  # Ignore any errors (file might be missing etc)
@@ -109,20 +111,24 @@ class GUI:
         # self.close_button.pack()
 
         self.undo_button = ttk.Button(
-            root, text="Undo changes to XXX", command=async_handler(self.on_undo_click))
+            root, text="Undo changes to XXX", command=async_handler(self.on_undo_click)
+        )
         self.revert_button = ttk.Button(
-            root, text="Revert XXX to save from 5 minutes ago", command=async_handler(self.on_revert_click))
+            root,
+            text="Revert XXX to save from 5 minutes ago",
+            command=async_handler(self.on_revert_click),
+        )
 
         # Define a label for the list.
-        self.status = ttk.Label(
-            root, text=status_watching_str)
+        self.status = ttk.Label(root, text=status_watching_str)
 
         # List supported games
-        treev = ttk.Treeview(root,
-                             selectmode='browse'
-                             # bg="grey",
-                             # activestyle='dotbox'
-                             )
+        treev = ttk.Treeview(
+            root,
+            selectmode="browse",
+            # bg="grey",
+            # activestyle='dotbox'
+        )
         self.supported_games = treev
 
         s_sb = add_scrollbar(treev)
@@ -131,15 +137,16 @@ class GUI:
         treev["columns"] = ("name",)
 
         # Defining heading
-        treev['show'] = 'headings'
+        treev["show"] = "headings"
         treev.heading("name", text="Supported Games")
 
         # List supported games
-        treev = ttk.Treeview(root,
-                             selectmode='none'
-                             # bg="grey",
-                             # activestyle='dotbox'
-                             )
+        treev = ttk.Treeview(
+            root,
+            selectmode="none",
+            # bg="grey",
+            # activestyle='dotbox'
+        )
         self.supported_games = treev
 
         games_sb = add_scrollbar(treev)
@@ -148,19 +155,21 @@ class GUI:
         treev["columns"] = ("name",)
 
         # Defining heading
-        treev['show'] = 'headings'
+        treev["show"] = "headings"
         treev.heading("name", text="Supported Games")
 
         char_width = 8
-        treev.column("name", minwidth=char_width * 10,
-                     width=char_width * 30, stretch=YES)
+        treev.column(
+            "name", minwidth=char_width * 10, width=char_width * 30, stretch=YES
+        )
 
         # List save games
-        treev = ttk.Treeview(root,
-                             selectmode='browse'
-                             # bg="grey",
-                             # activestyle='dotbox'
-                             )
+        treev = ttk.Treeview(
+            root,
+            selectmode="browse",
+            # bg="grey",
+            # activestyle='dotbox'
+        )
         self.save_games = treev
 
         saves_sb = add_scrollbar(treev)
@@ -169,21 +178,20 @@ class GUI:
         treev["columns"] = ("name", "time")
 
         # Defining heading
-        treev['show'] = 'headings'
+        treev["show"] = "headings"
         treev.heading("name", text="Save games")
         treev.heading("time", text="Time")
 
-        treev.column("name", minwidth=char_width * 10,
-                     width=char_width * 30, stretch=YES)
-        treev.column("time", minwidth=char_width * 6,
-                     width=char_width * 17, stretch=NO)
+        treev.column(
+            "name", minwidth=char_width * 10, width=char_width * 30, stretch=YES
+        )
+        treev.column("time", minwidth=char_width * 6, width=char_width * 17, stretch=NO)
 
         treev.bind("<<TreeviewSelect>>", self.on_savegame_selected)
 
         # Do the layout per this great documentation: https://tkdocs.com/tutorial/grid.html
 
-        self.supported_games.grid(
-            row=0, column=0, sticky=(N, S, W, E), rowspan=3)
+        self.supported_games.grid(row=0, column=0, sticky=(N, S, W, E), rowspan=3)
         games_sb.grid(row=0, column=1, sticky=(N, S), rowspan=3)
 
         self.save_games.grid(row=0, column=3, sticky=(N, S, E, W), rowspan=1)
@@ -195,8 +203,7 @@ class GUI:
         self.undo_button.grid_remove()
         self.revert_button.grid_remove()
 
-        self.status.grid(row=10, column=0, sticky=(
-            W, E), padx=8, pady=8, columnspan=4)
+        self.status.grid(row=10, column=0, sticky=(W, E), padx=8, pady=8, columnspan=4)
 
         root.rowconfigure(0, weight=1)
 
@@ -213,7 +220,8 @@ class GUI:
 
             # set revert button text
             self.revert_button.config(
-                text=f'Revert { si["game_info"]["game_name"]} to save from { saveinfo_ago_str(si)}')
+                text=f'Revert { si["game_info"]["game_name"]} to save from { saveinfo_ago_str(si)}'
+            )
 
             self.revert_button.grid()  # show revert button
 
@@ -260,8 +268,7 @@ class GUI:
         # put all children into the args of this function call
         tree.delete(*tree.get_children())
         for g in supported:
-            tree.insert(
-                "", END, values=(g["game_name"], ))
+            tree.insert("", END, values=(g["game_name"],))
 
     async def find_savegames(self):
         all_saves = await self.engine.get_saveinfos()
@@ -277,7 +284,8 @@ class GUI:
             g = undos[0]
             self.undo = g
             self.undo_button.config(
-                text=f'Undo changes to { g["game_info"]["game_name"]}')
+                text=f'Undo changes to { g["game_info"]["game_name"]}'
+            )
             self.undo_button.grid()
 
         # fill the treeview
@@ -287,9 +295,14 @@ class GUI:
         for g in saveinfos:
             # print(f'  {g}')
             tree.insert(
-                "", END, iid=g["filename"], values=(g["game_info"]["game_name"], saveinfo_ago_str(g)))
+                "",
+                END,
+                iid=g["filename"],
+                values=(g["game_info"]["game_name"], saveinfo_ago_str(g)),
+            )
 
     """Look for steam changes, and then queue up looking again"""
+
     async def watch_steam(self):
         # self.engine.ignore_unchanged = False  # for testing
         result = await self.watcher.check_once()
@@ -298,9 +311,11 @@ class GUI:
         if result.game_started:
             self.set_status(status_watching_str)
 
-        if (len(backups) > 0):
+        if len(backups) > 0:
             si = backups[0]  # only print for first one (the common case)
-            new_text = f'Save-game snapshot taken for { si["game_info"]["game_name"] }...'
+            new_text = (
+                f'Save-game snapshot taken for { si["game_info"]["game_name"] }...'
+            )
             await self.find_savegames()
             self.set_status(new_text)
 
@@ -327,13 +342,14 @@ class GUI:
         # might be missing on some systems so use a try catch and do the imports here
         try:
             from PIL import Image, ImageTk
-            with Image.open(os.path.join(os.path.dirname(
-                    __file__),  'data', 'icons8-refresh-96.png')) as ico:
+
+            with Image.open(
+                os.path.join(os.path.dirname(__file__), "data", "icons8-refresh-96.png")
+            ) as ico:
                 photo = ImageTk.PhotoImage(ico)
                 self.root.wm_iconphoto(True, photo)
         except Exception as e:
-            logger.warning(
-                f'Can\'t set application icon due to missing library: {e}')
+            logger.warning(f"Can't set application icon due to missing library: {e}")
 
 
 """
@@ -359,5 +375,6 @@ def run(e: Engine):
     g = GUI(root, e)
     # async_mainloop(root)
 
-    asyncio.get_event_loop_policy().get_event_loop(
-    ).run_until_complete(g.async_main_loop())
+    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(
+        g.async_main_loop()
+    )

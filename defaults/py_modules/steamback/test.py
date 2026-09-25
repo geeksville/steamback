@@ -1,11 +1,9 @@
-
-
 from . import Engine
 from .util import make_game_info
 
 
 async def testImpl(p: Engine):
-    print('Simulating decky loader for testing...')
+    print("Simulating decky loader for testing...")
 
     p.add_account_id(49847735)
     # print(f'Initial saveinfos { await p.get_saveinfos() }')
@@ -13,9 +11,9 @@ async def testImpl(p: Engine):
 
     # Test find_supported
     supported = await p.find_supported(p.all_games.values())
-    print(f'Supported games: ')
+    print(f"Supported games: ")
     for i in supported:
-        print(f'  {i}')
+        print(f"  {i}")
 
     valheim = make_game_info(p, 892970)
     subnautica = make_game_info(p, 264710)
@@ -30,15 +28,15 @@ async def testImpl(p: Engine):
     # .steam/debian-installation/steamapps/common/SubnauticaZero/SNAppData/SavedGames/
 
     si = await p.do_backup(garfield)
-    print(f'{ garfield } results: { si }')
+    print(f"{ garfield } results: { si }")
     assert si is not None
 
     si = await p.do_backup(nms)
-    print(f'no mans sky backup results: { si }')
+    print(f"no mans sky backup results: { si }")
     assert si is not None
 
     si = await p.do_backup(timberborn)
-    print(f'timberborn backup results: { si }')
+    print(f"timberborn backup results: { si }")
     assert si is not None
 
     # cloud backups seem broken in general for this app
@@ -47,19 +45,19 @@ async def testImpl(p: Engine):
     # assert si is not None
 
     si = await p.do_backup(mindustry)
-    print(f'mindustry backup results: { si }')
+    print(f"mindustry backup results: { si }")
     assert si is not None
 
     si = await p.do_backup(subnauticabz)
-    print(f'SubnauticaBZ backup results: { si }')
+    print(f"SubnauticaBZ backup results: { si }")
     assert si is not None
 
     si = await p.do_backup(subnautica)
-    print(f'Subnautica backup results: { si }')
+    print(f"Subnautica backup results: { si }")
     assert si is not None
 
     si = await p.do_backup(valheim)
-    print(f'Valheim backup results: { si }')
+    print(f"Valheim backup results: { si }")
     assert si is not None
 
     # Test a game with formerly unsupported vdf (raft)
@@ -76,11 +74,11 @@ async def testImpl(p: Engine):
 
     infos = await p.get_saveinfos()
     saves = list(filter(lambda i: not i["is_undo"], infos))
-    print(f'Current saveinfos { infos }')
+    print(f"Current saveinfos { infos }")
 
     # Try to restore from our most recently created valheim snapshot
     i = saves[0]
     p.dry_run = True  # Don't accidentally toast my running game
     await p.do_restore(i)
 
-    print('Tests complete')
+    print("Tests complete")
